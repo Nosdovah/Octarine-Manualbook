@@ -168,15 +168,16 @@
 .cat-action-icon {
   background: transparent;
   border: none;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   cursor: pointer;
-  padding: 2px 4px;
+  padding: 3px 5px;
   border-radius: 4px;
   color: #666666;
   transition: all 0.15s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  line-height: 1;
 }
 
 .cat-action-icon:hover {
@@ -200,6 +201,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
+  min-height: 32px;
 }
 
 .nav-link {
@@ -207,7 +209,7 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  padding: 7px 8px;
+  padding: 6px 8px;
   border-radius: 6px;
   font-size: 0.86rem;
   color: var(--text-secondary);
@@ -247,23 +249,19 @@
   border: none;
   font-size: 0.82rem;
   cursor: pointer;
-  padding: 2px 3px;
+  padding: 3px 4px;
   border-radius: 4px;
   color: #777777;
   transition: all 0.15s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  line-height: 1;
 }
 
 .page-action-icon:hover {
   background: #e4e4e4;
   color: #111111;
-}
-
-.page-action-icon.delete-icon {
-  font-size: 1.1rem;
-  line-height: 1;
 }
 
 .page-action-icon.delete-icon:hover {
@@ -292,6 +290,147 @@
   border-color: #111111;
   color: #111111;
   background: #f0f0f0;
+}
+
+/* =========================================
+   INLINE EDITING & CONFIRMATION BOXES
+   ========================================= */
+.sidebar-inline-form {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #111111;
+  border-radius: 4px;
+  padding: 2px 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.sidebar-inline-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 0.82rem;
+  padding: 4px;
+  color: #111111;
+  background: transparent;
+  min-width: 0;
+  font-family: inherit;
+}
+
+.inline-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.btn-inline-save {
+  background: #111111;
+  color: #ffffff;
+  border: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.btn-inline-save:hover {
+  background: #2563eb;
+}
+
+.btn-inline-cancel {
+  background: #e4e4e7;
+  color: #52525b;
+  border: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.btn-inline-cancel:hover {
+  background: #d4d4d8;
+  color: #18181b;
+}
+
+/* Inline Delete Confirmation */
+.inline-confirm-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  width: 100%;
+}
+
+.confirm-text {
+  color: #991b1b;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.confirm-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-confirm-delete {
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  padding: 3px 7px;
+  border-radius: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-confirm-delete:hover {
+  background: #b91c1c;
+}
+
+.btn-confirm-cancel {
+  background: #e5e7eb;
+  color: #374151;
+  border: none;
+  padding: 3px 7px;
+  border-radius: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-confirm-cancel:hover {
+  background: #d1d5db;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.mb-2 {
+  margin-bottom: 6px;
 }
 
 @media (max-width: 768px) {

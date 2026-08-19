@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useManual } from '../context/ManualContext';
 import './HotspotEditorModal.css';
@@ -11,6 +11,18 @@ const NewPageModal = ({ isOpen, onClose, defaultCategoryId }) => {
   const [categoryId, setCategoryId] = useState(defaultCategoryId || (docsStructure[0]?.id || ''));
   const [isNewCategory, setIsNewCategory] = useState(false);
   const [newCategoryTitle, setNewCategoryTitle] = useState('');
+
+  useEffect(() => {
+    if (defaultCategoryId) {
+      setCategoryId(defaultCategoryId);
+    } else if (docsStructure.length > 0) {
+      setCategoryId(docsStructure[0].id);
+    }
+    setTitle('');
+    setSlug('');
+    setIsNewCategory(false);
+    setNewCategoryTitle('');
+  }, [defaultCategoryId, isOpen, docsStructure]);
 
   if (!isOpen) return null;
 
@@ -50,6 +62,7 @@ const NewPageModal = ({ isOpen, onClose, defaultCategoryId }) => {
               value={title} 
               onChange={(e) => handleTitleChange(e.target.value)} 
               required 
+              autoFocus
             />
           </div>
 
