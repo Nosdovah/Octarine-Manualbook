@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useManual } from '../context/ManualContext';
 import './HotspotEditorModal.css';
 import './HeaderEditorModal.css';
@@ -50,7 +51,7 @@ const HeaderEditorModal = ({ isOpen, onClose }) => {
     onClose();
   };
 
-  return (
+  const modalElement = (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content header-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
@@ -146,6 +147,8 @@ const HeaderEditorModal = ({ isOpen, onClose }) => {
       </div>
     </div>
   );
+
+  return createPortal(modalElement, document.body);
 };
 
 export default HeaderEditorModal;

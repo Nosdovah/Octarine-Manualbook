@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import './HotspotEditorModal.css';
 
 const HotspotEditorModal = ({ isOpen, onClose, hotspot, onSave, onDelete }) => {
@@ -29,7 +30,7 @@ const HotspotEditorModal = ({ isOpen, onClose, hotspot, onSave, onDelete }) => {
     onClose();
   };
 
-  return (
+  const modalElement = (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content hotspot-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
@@ -48,6 +49,7 @@ const HotspotEditorModal = ({ isOpen, onClose, hotspot, onSave, onDelete }) => {
               onChange={(e) => setBadge(e.target.value)} 
               placeholder="e.g. Step 1, Email, Action, Warning" 
               required 
+              autoFocus
             />
             <span className="form-hint">Displayed inside the badge tag in the tooltip</span>
           </div>
@@ -95,10 +97,8 @@ const HotspotEditorModal = ({ isOpen, onClose, hotspot, onSave, onDelete }) => {
               type="button" 
               className="btn-danger" 
               onClick={() => {
-                if (window.confirm('Delete this step dot?')) {
-                  onDelete(hotspot.id);
-                  onClose();
-                }
+                onDelete(hotspot.id);
+                onClose();
               }}
             >
               Delete Dot
@@ -112,6 +112,8 @@ const HotspotEditorModal = ({ isOpen, onClose, hotspot, onSave, onDelete }) => {
       </div>
     </div>
   );
+
+  return createPortal(modalElement, document.body);
 };
 
 export default HotspotEditorModal;

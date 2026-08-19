@@ -1,65 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useManual } from '../context/ManualContext';
+import { parseMarkdownToSections, sectionsToMarkdown } from '../utils/markdownSections';
 import InteractiveImageMap from './InteractiveImageMap';
 import ImageSessionModal from './ImageSessionModal';
 import './ContentViewer.css';
-
-// Helper: Parse markdown string into structured text and image sections
-const parseMarkdownToSections = (markdown) => {
-  if (!markdown || !markdown.trim()) {
-    return [{ id: 'sec-1', type: 'text', content: '' }];
-  }
-
-  const regex = /```interactive-map\s*([\w-]+)\s*```/g;
-  const sections = [];
-  let lastIndex = 0;
-  let match;
-  let counter = 0;
-
-  while ((match = regex.exec(markdown)) !== null) {
-    const textBefore = markdown.substring(lastIndex, match.index).trim();
-    if (textBefore) {
-      sections.push({
-        id: `sec-txt-${++counter}`,
-        type: 'text',
-        content: textBefore
-      });
-    }
-    sections.push({
-      id: `sec-img-${++counter}`,
-      type: 'image',
-      mapId: match[1].trim()
-    });
-    lastIndex = regex.lastIndex;
-  }
-
-  const remainingText = markdown.substring(lastIndex).trim();
-  if (remainingText || sections.length === 0) {
-    sections.push({
-      id: `sec-txt-${++counter}`,
-      type: 'text',
-      content: remainingText
-    });
-  }
-
-  return sections;
-};
-
-// Helper: Serialize sections back to markdown string
-const sectionsToMarkdown = (sections) => {
-  return sections
-    .map((sec) => {
-      if (sec.type === 'text') {
-        return sec.content ? sec.content.trim() : '';
-      } else if (sec.type === 'image') {
-        return `\`\`\`interactive-map\n${sec.mapId}\n\`\`\``;
-      }
-      return '';
-    })
-    .filter(Boolean)
-    .join('\n\n');
-};
 
 const ContentViewer = ({ slug }) => {
   const { 
@@ -81,14 +26,16 @@ const ContentViewer = ({ slug }) => {
   const [editorLayout, setEditorLayout] = useState('split'); // 'split' | 'edit-only' | 'preview-only'
   const [editorSplitRatio, setEditorSplitRatio] = useState(50); // percentage
   const [selectedMapToInsert, setSelectedMapToInsert] = useState('');
-  const [isDragOverEditor, setIsDragOverEditor] = useState(false);
   const [editingModalMapId, setEditingModalMapId] = useState(null);
   const [draggedSectionIndex, setDraggedSectionIndex] = useState(null);
+  const [uploadInsertIndex, setUploadInsertIndex] = useState(null);
+  const [replacingMapId, setReplacingMapId] = useState(null);
 
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
+  const sectionTextareaRefs = useRef({});
 
-  // Sync state when page changes
+  // Sync state when page content changes
   useEffect(() => {
     setEditorText(content);
     setSections(parseMarkdownToSections(content));
@@ -169,29 +116,16 @@ const ContentViewer = ({ slug }) => {
     const updated = [...sections];
     updated.splice(index + 1, 0, newSec);
     updateSectionsAndContent(updated);
+    setSelectedMapToInsert(''); // Reset
     showNotification('Inserted image section: ' + targetMapId);
   };
 
   // Insert snippet in raw textarea
   const insertSnippet = (before, after = '') => {
-    if (formTab === 'sections') {
-      // In sections mode, append or prepend to active or last text section
-      const lastTextIdx = sections.map((s, i) => s.type === 'text' ? i : -1).filter(i => i >= 0).pop();
-      if (lastTextIdx !== undefined && lastTextIdx >= 0) {
-        const updated = [...sections];
-        updated[lastTextIdx] = {
-          ...updated[lastTextIdx],
-          content: updated[lastTextIdx].content + '\n\n' + before + after
-        };
-        updateSectionsAndContent(updated);
-        return;
-      }
-    }
-
     if (!textareaRef.current) return;
     const el = textareaRef.current;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
+    const start = el.selectionStart || 0;
+    const end = el.selectionEnd || 0;
     const selected = editorText.substring(start, end);
     const replacement = before + selected + after;
     const newText = editorText.substring(0, start) + replacement + editorText.substring(end);
@@ -205,20 +139,50 @@ const ContentViewer = ({ slug }) => {
     }, 50);
   };
 
+  // Insert snippet in specific text section
+  const insertSectionSnippet = (sectionId, before, after = '') => {
+    const el = sectionTextareaRefs.current[sectionId];
+    if (!el) return;
+    
+    const start = el.selectionStart || 0;
+    const end = el.selectionEnd || 0;
+    const currentVal = el.value || '';
+    const selected = currentVal.substring(start, end);
+    const replacement = before + selected + after;
+    const newVal = currentVal.substring(0, start) + replacement + currentVal.substring(end);
+    
+    handleSectionTextChange(sectionId, newVal);
+
+    setTimeout(() => {
+      el.focus();
+      el.setSelectionRange(start + before.length, start + before.length + selected.length);
+    }, 30);
+  };
+
   // Direct local file upload from machine
   const handleLocalImageSelect = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const newMapId = await insertLocalImageSession(file, currentSlug);
-        if (newMapId) {
-          setSections(parseMarkdownToSections(pagesContent[currentSlug] || ''));
+        if (replacingMapId) {
+          await replacePictureSessionImage(replacingMapId, file);
+        } else {
+          const newMapId = await registerLocalImageSession(file);
+          if (newMapId) {
+            const newSec = { id: 'sec-img-' + Date.now(), type: 'image', mapId: newMapId };
+            const updated = [...sections];
+            const insertIdx = uploadInsertIndex !== null ? uploadInsertIndex + 1 : updated.length;
+            updated.splice(insertIdx, 0, newSec);
+            updateSectionsAndContent(updated);
+          }
         }
       } catch (err) {
         alert('Failed to upload image: ' + err.message);
       }
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
+    setReplacingMapId(null);
+    setUploadInsertIndex(null);
   };
 
   // Drag & Drop reordering of sections
@@ -243,6 +207,42 @@ const ContentViewer = ({ slug }) => {
     showNotification('Reordered section');
   };
 
+  const renderAddSectionDivider = (indexToInsertAt) => (
+    <div className="add-section-divider">
+      <div className="add-divider-line"></div>
+      <div className="add-divider-actions">
+        <span className="add-divider-label">+ Add Section:</span>
+        <button type="button" className="add-btn text-btn" onClick={() => insertTextSectionAt(indexToInsertAt)}>
+          📝 Text
+        </button>
+        <button 
+          type="button" 
+          className="add-btn img-btn" 
+          onClick={() => {
+            setUploadInsertIndex(indexToInsertAt);
+            setReplacingMapId(null);
+            fileInputRef.current?.click();
+          }}
+        >
+          📁 Upload Image
+        </button>
+        <select 
+          className="add-btn select-btn" 
+          value="" 
+          onChange={(e) => {
+            insertImageSectionAt(indexToInsertAt, e.target.value);
+            e.target.value = "";
+          }}
+        >
+          <option value="" disabled>🖼️ Choose Session</option>
+          {Object.entries(mapConfigs).map(([mId, mConf]) => (
+            <option key={mId} value={mId}>{mConf.title || mId}</option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+
   return (
     <div className={`content-viewer ${isSidebarOpen ? 'with-sidebar' : 'full-width'} ${isEditMode ? 'mode-editing' : ''}`}>
       {/* Visual Editor Toolbar when in Edit Mode */}
@@ -261,14 +261,6 @@ const ContentViewer = ({ slug }) => {
 
           {/* Local File Upload & Session Insertion */}
           <div className="editor-insert-map-group">
-            <button 
-              type="button" 
-              className="btn-upload-local-file" 
-              onClick={() => fileInputRef.current?.click()}
-              title="Upload an image file directly from your local computer"
-            >
-              📁 Upload Local Image
-            </button>
             <input 
               type="file" 
               ref={fileInputRef} 
@@ -276,24 +268,6 @@ const ContentViewer = ({ slug }) => {
               onChange={handleLocalImageSelect} 
               style={{ display: 'none' }} 
             />
-
-            <select 
-              value={selectedMapToInsert} 
-              onChange={(e) => setSelectedMapToInsert(e.target.value)}
-              className="map-picker-select"
-            >
-              <option value="">-- Choose Picture Session --</option>
-              {Object.entries(mapConfigs).map(([mId, mConf]) => (
-                <option key={mId} value={mId}>{mConf.title || mId}</option>
-              ))}
-            </select>
-            <button 
-              type="button" 
-              className="btn-insert-session" 
-              onClick={() => insertImageSectionAt(sections.length - 1, selectedMapToInsert)}
-            >
-              + Insert Section
-            </button>
           </div>
 
           {/* Layout Controls & Width Split Slider */}
@@ -387,10 +361,11 @@ const ContentViewer = ({ slug }) => {
             {formTab === 'sections' ? (
               <div className="sections-flow-container">
                 <div className="sections-intro-tip">
-                  <span>💡 <strong>Modular Sections:</strong> Move images up or down between text paragraphs effortlessly with ⬆️/⬇️ or drag the handle.</span>
+                  <span>💡 <strong>Modular Builder:</strong> Add, edit, or reorder content blocks. Images keep their high resolution naturally.</span>
                 </div>
 
                 <div className="sections-list">
+                  {renderAddSectionDivider(-1)}
                   {sections.map((section, idx) => {
                     const isFirst = idx === 0;
                     const isLast = idx === sections.length - 1;
@@ -398,9 +373,100 @@ const ContentViewer = ({ slug }) => {
                     if (section.type === 'image') {
                       const conf = mapConfigs[section.mapId] || {};
                       return (
+                        <React.Fragment key={section.id}>
+                          <div 
+                            className="section-card image-section-card"
+                            draggable
+                            onDragStart={(e) => handleSectionDragStart(e, idx)}
+                            onDragOver={(e) => handleSectionDragOver(e, idx)}
+                            onDrop={(e) => handleSectionDrop(e, idx)}
+                          >
+                            <div className="section-card-header">
+                              <div className="section-card-title-wrap">
+                                <span className="section-drag-handle" title="Drag to move section">⋮⋮</span>
+                                <span className="section-type-badge image-badge">🖼️ Image Section</span>
+                                <span className="image-session-name" title={conf.title || section.mapId}>
+                                  {conf.title || section.mapId}
+                                </span>
+                              </div>
+
+                              <div className="section-action-btns">
+                                <button 
+                                  type="button" 
+                                  className="sec-btn" 
+                                  disabled={isFirst}
+                                  onClick={() => moveSectionUp(idx)}
+                                >
+                                  ⬆️
+                                </button>
+                                <button 
+                                  type="button" 
+                                  className="sec-btn" 
+                                  disabled={isLast}
+                                  onClick={() => moveSectionDown(idx)}
+                                >
+                                  ⬇️
+                                </button>
+                                <button 
+                                  type="button" 
+                                  className="sec-btn" 
+                                  onClick={() => setEditingModalMapId(section.mapId)}
+                                  title="Edit title or description"
+                                >
+                                  ✏️ Edit
+                                </button>
+                                <button 
+                                  type="button" 
+                                  className="sec-btn sec-btn-delete" 
+                                  onClick={() => deleteSection(idx)}
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="image-section-body">
+                              {conf.imageUrl && (
+                                <div className="image-sec-thumbnail-wrap">
+                                  <img src={conf.imageUrl} alt={conf.altText || conf.title} className="image-sec-thumbnail" />
+                                </div>
+                              )}
+                              <div className="image-sec-info">
+                                <span className="image-sec-hotspot-count">
+                                  📍 <strong>{conf.hotspots?.length || 0}</strong> interactive step dots configured
+                                </span>
+                                <div className="image-sec-actions">
+                                  <button 
+                                    type="button" 
+                                    className="img-sec-action-btn"
+                                    onClick={() => {
+                                      setReplacingMapId(section.mapId);
+                                      fileInputRef.current?.click();
+                                    }}
+                                  >
+                                    🔄 Replace Image
+                                  </button>
+                                  <button 
+                                    type="button" 
+                                    className="img-sec-action-btn"
+                                    onClick={() => setEditingModalMapId(section.mapId)}
+                                  >
+                                    ➕ Manage Step Dots
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          {renderAddSectionDivider(idx)}
+                        </React.Fragment>
+                      );
+                    }
+
+                    // TEXT SECTION
+                    return (
+                      <React.Fragment key={section.id}>
                         <div 
-                          key={section.id} 
-                          className="section-card image-section-card"
+                          className="section-card text-section-card"
                           draggable
                           onDragStart={(e) => handleSectionDragStart(e, idx)}
                           onDragOver={(e) => handleSectionDragOver(e, idx)}
@@ -409,157 +475,58 @@ const ContentViewer = ({ slug }) => {
                           <div className="section-card-header">
                             <div className="section-card-title-wrap">
                               <span className="section-drag-handle" title="Drag to move section">⋮⋮</span>
-                              <span className="section-type-badge image-badge">🖼️ Picture Section</span>
-                              <span className="image-session-name" title={conf.title || section.mapId}>
-                                {conf.title || section.mapId}
-                              </span>
+                              <span className="section-type-badge text-badge">📝 Text Section</span>
+                              <div className="inline-format-bar">
+                                <button type="button" className="inline-fmt-btn" onClick={() => insertSectionSnippet(section.id, '## ')}>H2</button>
+                                <button type="button" className="inline-fmt-btn" onClick={() => insertSectionSnippet(section.id, '### ')}>H3</button>
+                                <button type="button" className="inline-fmt-btn font-bold" onClick={() => insertSectionSnippet(section.id, '**', '**')}>B</button>
+                                <button type="button" className="inline-fmt-btn font-italic" onClick={() => insertSectionSnippet(section.id, '*', '*')}>I</button>
+                                <button type="button" className="inline-fmt-btn" onClick={() => insertSectionSnippet(section.id, '- ')}>List</button>
+                              </div>
                             </div>
 
                             <div className="section-action-btns">
+                              <span className="section-char-count">{section.content.length} chars</span>
                               <button 
                                 type="button" 
                                 className="sec-btn" 
                                 disabled={isFirst}
                                 onClick={() => moveSectionUp(idx)}
-                                title="Move image section above previous text"
                               >
-                                ⬆️ Move Up
+                                ⬆️
                               </button>
                               <button 
                                 type="button" 
                                 className="sec-btn" 
                                 disabled={isLast}
                                 onClick={() => moveSectionDown(idx)}
-                                title="Move image section below next text"
                               >
-                                ⬇️ Move Down
-                              </button>
-                              <button 
-                                type="button" 
-                                className="sec-btn" 
-                                onClick={() => setEditingModalMapId(section.mapId)}
-                                title="Edit title or replace image"
-                              >
-                                ✏️ Edit
+                                ⬇️
                               </button>
                               <button 
                                 type="button" 
                                 className="sec-btn sec-btn-delete" 
                                 onClick={() => deleteSection(idx)}
-                                title="Remove this image section from page"
                               >
-                                🗑️ Remove
+                                🗑️
                               </button>
                             </div>
                           </div>
 
-                          <div className="image-section-body">
-                            {conf.imageUrl && (
-                              <div className="image-sec-thumbnail-wrap">
-                                <img src={conf.imageUrl} alt={conf.altText || conf.title} className="image-sec-thumbnail" />
-                              </div>
-                            )}
-                            <div className="image-sec-info">
-                              <span className="image-sec-hotspot-count">
-                                📍 <strong>{conf.hotspots?.length || 0}</strong> interactive step dots configured
-                              </span>
-                              <span className="image-sec-hint">
-                                Rendered dynamically in live preview on the right.
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Quick insertion strip after this card */}
-                          <div className="section-insert-strip">
-                            <button 
-                              type="button" 
-                              className="insert-strip-btn"
-                              onClick={() => insertTextSectionAt(idx)}
-                            >
-                              + Add Paragraph Below
-                            </button>
+                          <div className="text-section-body">
+                            <textarea
+                              ref={(el) => { if (el) sectionTextareaRefs.current[section.id] = el; }}
+                              className="section-textarea"
+                              value={section.content}
+                              onFocus={() => setActiveSectionId(section.id)}
+                              onChange={(e) => handleSectionTextChange(section.id, e.target.value)}
+                              placeholder="Write headings, markdown, or step instructions for this section..."
+                              rows={Math.max(4, Math.min(18, (section.content.match(/\n/g) || []).length + 3))}
+                            />
                           </div>
                         </div>
-                      );
-                    }
-
-                    // TEXT SECTION
-                    return (
-                      <div 
-                        key={section.id} 
-                        className="section-card text-section-card"
-                        draggable
-                        onDragStart={(e) => handleSectionDragStart(e, idx)}
-                        onDragOver={(e) => handleSectionDragOver(e, idx)}
-                        onDrop={(e) => handleSectionDrop(e, idx)}
-                      >
-                        <div className="section-card-header">
-                          <div className="section-card-title-wrap">
-                            <span className="section-drag-handle" title="Drag to move section">⋮⋮</span>
-                            <span className="section-type-badge text-badge">📝 Text Section</span>
-                            <span className="section-char-count">{section.content.length} chars</span>
-                          </div>
-
-                          <div className="section-action-btns">
-                            <button 
-                              type="button" 
-                              className="sec-btn" 
-                              disabled={isFirst}
-                              onClick={() => moveSectionUp(idx)}
-                              title="Move text section up"
-                            >
-                              ⬆️ Up
-                            </button>
-                            <button 
-                              type="button" 
-                              className="sec-btn" 
-                              disabled={isLast}
-                              onClick={() => moveSectionDown(idx)}
-                              title="Move text section down"
-                            >
-                              ⬇️ Down
-                            </button>
-                            <button 
-                              type="button" 
-                              className="sec-btn sec-btn-delete" 
-                              onClick={() => deleteSection(idx)}
-                              title="Delete text block"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="text-section-body">
-                          <textarea
-                            className="section-textarea"
-                            value={section.content}
-                            onChange={(e) => handleSectionTextChange(section.id, e.target.value)}
-                            placeholder="Write headings, markdown, or step instructions for this section..."
-                            rows={Math.max(4, Math.min(18, (section.content.match(/\n/g) || []).length + 3))}
-                          />
-                        </div>
-
-                        {/* Quick insertion strip after this card */}
-                        <div className="section-insert-strip">
-                          <button 
-                            type="button" 
-                            className="insert-strip-btn"
-                            onClick={() => insertTextSectionAt(idx)}
-                          >
-                            + Add Paragraph Below
-                          </button>
-                          {selectedMapToInsert && (
-                            <button 
-                              type="button" 
-                              className="insert-strip-btn insert-img-btn"
-                              onClick={() => insertImageSectionAt(idx, selectedMapToInsert)}
-                            >
-                              + Insert "{mapConfigs[selectedMapToInsert]?.title || selectedMapToInsert}" Here
-                            </button>
-                          )}
-                        </div>
-                      </div>
+                        {renderAddSectionDivider(idx)}
+                      </React.Fragment>
                     );
                   })}
                 </div>

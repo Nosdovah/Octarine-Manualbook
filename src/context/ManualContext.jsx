@@ -1,12 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import adminLoginImg from '../assets/admin-login.png';
+import { parseMarkdownToSections, sectionsToMarkdown } from '../utils/markdownSections';
 import { 
   fetchAllManualDataFromSupabase, 
   isSupabaseConfigured,
   syncPageContentToSupabase,
   syncHotspotToSupabase,
   deleteHotspotFromSupabase,
-  syncHeaderToSupabase
+  syncHeaderToSupabase,
+  upsertCategoryToSupabase,
+  deleteCategoryFromSupabase,
+  upsertPageToSupabase,
+  deletePageFromSupabase,
+  upsertInteractiveMapToSupabase,
+  deleteInteractiveMapFromSupabase
 } from '../lib/supabaseClient';
 
 const ManualContext = createContext();
@@ -33,7 +40,8 @@ const DEFAULT_DOCS_STRUCTURE = [
     id: 'cat-admin-portal',
     title: 'Admin Portal',
     items: [
-      { id: 'page-admin-login', title: 'Admin Login Guide', slug: 'admin-login' }
+      { id: 'page-admin-login', title: 'Admin Login Guide', slug: 'admin-login' },
+      { id: 'page-sales-dashboard', title: 'Sales Dashboard', slug: 'sales-dashboard' }
     ]
   },
   {
@@ -113,8 +121,8 @@ const DEFAULT_MAP_CONFIGS = {
     hotspots: [
       {
         id: 'hs-url',
-        x: 27.5,
-        y: 4.5,
+        x: 24.5,
+        y: 3.2,
         badge: 'Step 1',
         placement: 'bottom',
         title: '1. Administrative URL',
@@ -122,8 +130,8 @@ const DEFAULT_MAP_CONFIGS = {
       },
       {
         id: 'hs-brand',
-        x: 50,
-        y: 29.5,
+        x: 50.0,
+        y: 26.0,
         badge: 'Portal',
         placement: 'bottom',
         title: 'Octarine Admin Gateway',
@@ -131,8 +139,8 @@ const DEFAULT_MAP_CONFIGS = {
       },
       {
         id: 'hs-email',
-        x: 44,
-        y: 53.8,
+        x: 43.8,
+        y: 52.5,
         badge: 'Step 2',
         placement: 'top',
         title: '2. Email Address Field',
@@ -140,8 +148,8 @@ const DEFAULT_MAP_CONFIGS = {
       },
       {
         id: 'hs-password',
-        x: 56,
-        y: 61.8,
+        x: 55.5,
+        y: 62.5,
         badge: 'Step 3',
         placement: 'top',
         title: '3. Password Field & Visibility Toggle',
@@ -149,12 +157,62 @@ const DEFAULT_MAP_CONFIGS = {
       },
       {
         id: 'hs-signin',
-        x: 50,
-        y: 68.2,
+        x: 50.0,
+        y: 70.5,
         badge: 'Step 4',
         placement: 'bottom',
         title: '4. Sign In Action Button',
         description: 'Click "Sign in" (or press Enter) to authenticate and proceed directly to the Octarine Admin Management Dashboard.'
+      }
+    ]
+  },
+  'sales-dashboard-1': {
+    title: 'Sales Dashboard - Top Metrics & Daily Orders',
+    imageUrl: 'https://placehold.co/1200x600/f8fafc/334155?text=Please+Upload+Sales+Dashboard+Section+1+Image',
+    altText: 'Sales Dashboard Top Metrics',
+    hotspots: [
+      {
+        id: 'hs-sd1-metrics',
+        x: 30,
+        y: 20,
+        badge: 'Metrics',
+        placement: 'bottom',
+        title: 'High-Level Metrics',
+        description: 'Displays the unique customers, total order count, total GMV, and Average Order Value (AOV) for the selected date range.'
+      },
+      {
+        id: 'hs-sd1-table',
+        x: 50,
+        y: 50,
+        badge: 'Table',
+        placement: 'bottom',
+        title: 'Case Breakdown Table',
+        description: 'Details order count and GMV specifically isolated by Order Cases (A: Cancelled/Unpaid, B: Delivered, C: Paid & Cancelled).'
+      }
+    ]
+  },
+  'sales-dashboard-2': {
+    title: 'Sales Dashboard - Volume & Product Trends',
+    imageUrl: 'https://placehold.co/1200x600/f8fafc/334155?text=Please+Upload+Sales+Dashboard+Section+2+Image',
+    altText: 'Sales Dashboard Volume Trends',
+    hotspots: [
+      {
+        id: 'hs-sd2-gmv',
+        x: 50,
+        y: 25,
+        badge: 'Trends',
+        placement: 'bottom',
+        title: 'Daily GMV Trend Line',
+        description: 'Visualizes the fluctuation of Gross Merchandise Value on a daily basis, split by case types.'
+      },
+      {
+        id: 'hs-sd2-bottles',
+        x: 50,
+        y: 75,
+        badge: 'Products',
+        placement: 'top',
+        title: 'Bottle Size Distribution',
+        description: 'Breaks down the absolute volume of products sold by bottle size (2ml, 20ml, 50ml), helping manage inventory levels.'
       }
     ]
   }
@@ -273,6 +331,49 @@ To sign in to the Octarine backoffice, follow the standard authentication workfl
 | **"Too many failed attempts"** | Rate limiting activated after consecutive failed attempts. | Wait 5 minutes for the security cooldown or contact the Lead DevOps engineer. |
 | **"Unauthorized access"** | Account lacks administrative permissions. | Ensure you are signing in with an account granted the \`Store Admin\` or \`Manager\` role. |
 | **Session Expired** | Automatic timeout due to inactivity. | Refresh the page and re-enter your login credentials. |`,
+
+  'sales-dashboard': `# Sales Dashboard Guide
+
+The **Sales Dashboard** provides real-time analytics and insights into Octarine's daily performance, order volumes, and customer behavior.
+
+---
+
+## Section 1: Top Metrics & Daily Orders
+
+This section covers the core performance indicators and the daily order volume breakdown by case type.
+
+\`\`\`interactive-map
+sales-dashboard-1
+\`\`\`
+
+**Key Metrics Explained:**
+- **Unique Customers**: The sum of daily distinct customers making a purchase.
+- **Total Order**: The cumulative count of all orders (Case A + B + C).
+- **Total Value (GMV)**: Gross Merchandise Value across all orders.
+- **AOV (Average Order Value)**: Total Value divided by Total Orders, indicating the average spend per customer.
+
+**Cases A / B / C Range Totals**:
+This table breaks down performance by order status:
+- **Case A - UNPAID - CANCEL**: Orders that were placed but cancelled or left unpaid.
+- **Case B - PAID & DELIVERED**: Successfully completed and delivered orders.
+- **Case C - PAID - CANCEL**: Orders paid but subsequently cancelled.
+
+---
+
+## Section 2: GMV Trends & Product Volumes
+
+This section provides a deeper dive into revenue trends and product size preferences.
+
+\`\`\`interactive-map
+sales-dashboard-2
+\`\`\`
+
+**Daily GMV per case**:
+A line chart visualizing the Gross Merchandise Value trend over the selected date range.
+
+**Bottle Sizes (Keseluruhan)**:
+A consolidated bar chart showing the distribution of bottle sizes sold (e.g., 2ml discovery size, 20ml, 50ml). 
+The individual Case A, B, and C charts below it break down this volume metric by the specific order statuses.`,
 
   'about-octarine': `# About Octarine
 
@@ -425,7 +526,15 @@ export const ManualProvider = ({ children }) => {
   const [docsStructure, setDocsStructure] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.DOCS_STRUCTURE);
-      return saved ? JSON.parse(saved) : DEFAULT_DOCS_STRUCTURE;
+      if (saved) {
+        let parsed = JSON.parse(saved);
+        const adminPortal = parsed.find(c => c.id === 'cat-admin-portal');
+        if (adminPortal && !adminPortal.items.find(i => i.slug === 'sales-dashboard')) {
+          adminPortal.items.push({ id: 'page-sales-dashboard', title: 'Sales Dashboard', slug: 'sales-dashboard' });
+        }
+        return parsed;
+      }
+      return DEFAULT_DOCS_STRUCTURE;
     } catch {
       return DEFAULT_DOCS_STRUCTURE;
     }
@@ -434,7 +543,14 @@ export const ManualProvider = ({ children }) => {
   const [pagesContent, setPagesContent] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.PAGES_CONTENT);
-      return saved ? JSON.parse(saved) : DEFAULT_PAGES_CONTENT;
+      if (saved) {
+        let parsed = JSON.parse(saved);
+        if (!parsed['sales-dashboard']) {
+          parsed['sales-dashboard'] = DEFAULT_PAGES_CONTENT['sales-dashboard'];
+        }
+        return parsed;
+      }
+      return DEFAULT_PAGES_CONTENT;
     } catch {
       return DEFAULT_PAGES_CONTENT;
     }
@@ -443,7 +559,23 @@ export const ManualProvider = ({ children }) => {
   const [mapConfigs, setMapConfigs] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.MAP_CONFIGS);
-      return saved ? JSON.parse(saved) : DEFAULT_MAP_CONFIGS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed['admin-login-map']) {
+          parsed['admin-login-map'].imageUrl = adminLoginImg;
+          if (!parsed['admin-login-map'].customUserModified) {
+            parsed['admin-login-map'].hotspots = DEFAULT_MAP_CONFIGS['admin-login-map'].hotspots;
+          }
+        }
+        if (!parsed['sales-dashboard-1']) {
+          parsed['sales-dashboard-1'] = DEFAULT_MAP_CONFIGS['sales-dashboard-1'];
+        }
+        if (!parsed['sales-dashboard-2']) {
+          parsed['sales-dashboard-2'] = DEFAULT_MAP_CONFIGS['sales-dashboard-2'];
+        }
+        return parsed;
+      }
+      return DEFAULT_MAP_CONFIGS;
     } catch {
       return DEFAULT_MAP_CONFIGS;
     }
@@ -493,6 +625,32 @@ export const ManualProvider = ({ children }) => {
           if (dbData.headerConfig) setHeaderConfig(dbData.headerConfig);
           setIsSupabaseConnected(true);
           showNotification('Connected to Supabase live database');
+
+          // Auto-sync missing sales dashboard to DB if it was wiped
+          const adminCat = dbData.docsStructure?.find(c => c.id === 'cat-admin-portal');
+          if (adminCat && !adminCat.items.find(i => i.slug === 'sales-dashboard')) {
+            const newPage = { id: 'page-sales-dashboard', title: 'Sales Dashboard', slug: 'sales-dashboard' };
+            upsertPageToSupabase(newPage, adminCat.id, adminCat.items.length);
+            syncPageContentToSupabase('sales-dashboard', DEFAULT_PAGES_CONTENT['sales-dashboard']);
+            setDocsStructure(prev => {
+              const next = [...prev];
+              const c = next.find(x => x.id === adminCat.id);
+              if (c) c.items.push(newPage);
+              return next;
+            });
+            setPagesContent(prev => ({ ...prev, 'sales-dashboard': DEFAULT_PAGES_CONTENT['sales-dashboard'] }));
+
+            if (!dbData.mapConfigs['sales-dashboard-1']) {
+              upsertInteractiveMapToSupabase('sales-dashboard-1', DEFAULT_MAP_CONFIGS['sales-dashboard-1']);
+              DEFAULT_MAP_CONFIGS['sales-dashboard-1'].hotspots.forEach(hs => syncHotspotToSupabase('sales-dashboard-1', hs));
+              setMapConfigs(prev => ({ ...prev, 'sales-dashboard-1': DEFAULT_MAP_CONFIGS['sales-dashboard-1'] }));
+            }
+            if (!dbData.mapConfigs['sales-dashboard-2']) {
+              upsertInteractiveMapToSupabase('sales-dashboard-2', DEFAULT_MAP_CONFIGS['sales-dashboard-2']);
+              DEFAULT_MAP_CONFIGS['sales-dashboard-2'].hotspots.forEach(hs => syncHotspotToSupabase('sales-dashboard-2', hs));
+              setMapConfigs(prev => ({ ...prev, 'sales-dashboard-2': DEFAULT_MAP_CONFIGS['sales-dashboard-2'] }));
+            }
+          }
         }
       });
     }
@@ -533,19 +691,27 @@ export const ManualProvider = ({ children }) => {
     const newCat = {
       id: 'cat-' + Date.now(),
       title: title || 'New Category',
-      items: []
+      items: [],
+      sort_order: docsStructure.length
     };
     setDocsStructure(prev => [...prev, newCat]);
+    if (isSupabaseConfigured) upsertCategoryToSupabase(newCat);
     showNotification('Added new category: ' + (title || 'New Category'));
   };
 
   const renameCategory = (catId, newTitle) => {
-    setDocsStructure(prev => prev.map(cat => cat.id === catId ? { ...cat, title: newTitle } : cat));
+    setDocsStructure(prev => {
+      const updated = prev.map(cat => cat.id === catId ? { ...cat, title: newTitle } : cat);
+      const target = updated.find(cat => cat.id === catId);
+      if (target && isSupabaseConfigured) upsertCategoryToSupabase(target);
+      return updated;
+    });
     showNotification('Renamed category');
   };
 
   const deleteCategory = (catId) => {
     setDocsStructure(prev => prev.filter(cat => cat.id !== catId));
+    if (isSupabaseConfigured) deleteCategoryFromSupabase(catId);
     showNotification('Deleted category');
   };
 
@@ -557,12 +723,19 @@ export const ManualProvider = ({ children }) => {
       slug: pageSlug
     };
 
-    setDocsStructure(prev => prev.map(cat => {
-      if (cat.id === catId) {
-        return { ...cat, items: [...cat.items, newPage] };
+    setDocsStructure(prev => {
+      const updated = prev.map(cat => {
+        if (cat.id === catId) {
+          return { ...cat, items: [...cat.items, newPage] };
+        }
+        return cat;
+      });
+      const targetCat = updated.find(cat => cat.id === catId);
+      if (targetCat && isSupabaseConfigured) {
+        upsertPageToSupabase(newPage, catId, targetCat.items.length - 1);
       }
-      return cat;
-    }));
+      return updated;
+    });
 
     const finalContent = initialContent || `# ${title || 'New Page'}\n\nStart writing your content here...`;
     setPagesContent(prev => ({
@@ -579,10 +752,30 @@ export const ManualProvider = ({ children }) => {
   };
 
   const renamePage = (pageId, newTitle) => {
-    setDocsStructure(prev => prev.map(cat => ({
-      ...cat,
-      items: cat.items.map(item => item.id === pageId ? { ...item, title: newTitle } : item)
-    })));
+    setDocsStructure(prev => {
+      let foundPage = null;
+      let foundCatId = null;
+      let sortOrder = 0;
+      
+      const updated = prev.map(cat => {
+        const itemIdx = cat.items.findIndex(item => item.id === pageId);
+        if (itemIdx !== -1) {
+          foundCatId = cat.id;
+          sortOrder = itemIdx;
+          const newItems = [...cat.items];
+          newItems[itemIdx] = { ...newItems[itemIdx], title: newTitle };
+          foundPage = newItems[itemIdx];
+          return { ...cat, items: newItems };
+        }
+        return cat;
+      });
+
+      if (foundPage && foundCatId && isSupabaseConfigured) {
+        upsertPageToSupabase(foundPage, foundCatId, sortOrder);
+      }
+
+      return updated;
+    });
     showNotification('Renamed page');
   };
 
@@ -600,6 +793,10 @@ export const ManualProvider = ({ children }) => {
         delete next[slug];
         return next;
       });
+    }
+    
+    if (isSupabaseConfigured) {
+      deletePageFromSupabase(pageId);
     }
     showNotification('Deleted page');
   };
@@ -711,15 +908,22 @@ export const ManualProvider = ({ children }) => {
 
   const addPictureSession = (mapId, title, imageUrl, altText = '') => {
     const cleanId = mapId.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    const newSession = {
+      title: title || 'Interactive Picture Session',
+      imageUrl,
+      altText: altText || title || 'Picture Session',
+      hotspots: []
+    };
+    
     setMapConfigs(prev => ({
       ...prev,
-      [cleanId]: {
-        title: title || 'Interactive Picture Session',
-        imageUrl,
-        altText: altText || title || 'Picture Session',
-        hotspots: []
-      }
+      [cleanId]: newSession
     }));
+
+    if (isSupabaseConfigured) {
+      upsertInteractiveMapToSupabase(cleanId, newSession);
+    }
+    
     showNotification('Added picture session: ' + title);
     return cleanId;
   };
@@ -728,12 +932,13 @@ export const ManualProvider = ({ children }) => {
     setMapConfigs(prev => {
       const existing = prev[mapId];
       if (!existing) return prev;
+      const merged = { ...existing, ...updatedData };
+      if (isSupabaseConfigured) {
+        upsertInteractiveMapToSupabase(mapId, merged);
+      }
       return {
         ...prev,
-        [mapId]: {
-          ...existing,
-          ...updatedData
-        }
+        [mapId]: merged
       };
     });
     showNotification('Updated picture session details');
@@ -745,21 +950,25 @@ export const ManualProvider = ({ children }) => {
       delete next[mapId];
       return next;
     });
+    if (isSupabaseConfigured) {
+      deleteInteractiveMapFromSupabase(mapId);
+    }
     showNotification('Deleted picture session');
   };
 
   const deletePictureSessionFromPage = (currentSlug, mapId) => {
     const currentText = pagesContent[currentSlug] || '';
-    const regex = new RegExp(`\`\`\`interactive-map\\s*${mapId}\\s*\`\`\`\\n*`, 'g');
-    const updatedText = currentText.replace(regex, '').trim();
+    const sections = parseMarkdownToSections(currentText);
+    const filtered = sections.filter(s => !(s.type === 'image' && s.mapId === mapId));
+    const updatedText = sectionsToMarkdown(filtered);
     updatePageContent(currentSlug, updatedText);
     showNotification('Removed image from page');
   };
 
   const movePictureSessionInMarkdown = (currentSlug, mapId, direction) => {
     const currentText = pagesContent[currentSlug] || '';
-    const blocks = currentText.split(/\n{2,}/);
-    const targetIdx = blocks.findIndex(b => b.includes('```interactive-map') && b.includes(mapId));
+    const sections = parseMarkdownToSections(currentText);
+    const targetIdx = sections.findIndex(s => s.type === 'image' && s.mapId === mapId);
     
     if (targetIdx === -1) {
       showNotification('Picture session block not found in page');
@@ -771,22 +980,22 @@ export const ManualProvider = ({ children }) => {
         showNotification('Image is already at the top');
         return;
       }
-      const newBlocks = [...blocks];
-      const temp = newBlocks[targetIdx - 1];
-      newBlocks[targetIdx - 1] = newBlocks[targetIdx];
-      newBlocks[targetIdx] = temp;
-      updatePageContent(currentSlug, newBlocks.join('\n\n'));
+      const newSections = [...sections];
+      const temp = newSections[targetIdx - 1];
+      newSections[targetIdx - 1] = newSections[targetIdx];
+      newSections[targetIdx] = temp;
+      updatePageContent(currentSlug, sectionsToMarkdown(newSections));
       showNotification('Moved image up between paragraphs');
     } else if (direction === 'down') {
-      if (targetIdx === blocks.length - 1) {
+      if (targetIdx === sections.length - 1) {
         showNotification('Image is already at the bottom');
         return;
       }
-      const newBlocks = [...blocks];
-      const temp = newBlocks[targetIdx + 1];
-      newBlocks[targetIdx + 1] = newBlocks[targetIdx];
-      newBlocks[targetIdx] = temp;
-      updatePageContent(currentSlug, newBlocks.join('\n\n'));
+      const newSections = [...sections];
+      const temp = newSections[targetIdx + 1];
+      newSections[targetIdx + 1] = newSections[targetIdx];
+      newSections[targetIdx] = temp;
+      updatePageContent(currentSlug, sectionsToMarkdown(newSections));
       showNotification('Moved image down between paragraphs');
     }
   };
@@ -819,6 +1028,55 @@ export const ManualProvider = ({ children }) => {
         updatePageContent(currentSlug, updatedText);
         showNotification(`Uploaded local image: ${file.name}`);
         resolve(mapId);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const registerLocalImageSession = (file) => {
+    return new Promise((resolve, reject) => {
+      if (!file) {
+        reject(new Error('No file provided'));
+        return;
+      }
+      const rawName = file.name.replace(/\.[^/.]+$/, '');
+      const cleanTitle = rawName.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const mapId = 'img-' + Date.now();
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        addPictureSession(mapId, cleanTitle, dataUrl, cleanTitle);
+        resolve(mapId);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const replacePictureSessionImage = (mapId, file) => {
+    return new Promise((resolve, reject) => {
+      if (!file) {
+        reject(new Error('No file provided'));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        setMapConfigs(prev => {
+          const existing = prev[mapId];
+          if (!existing) return prev;
+          return {
+            ...prev,
+            [mapId]: {
+              ...existing,
+              imageUrl: dataUrl
+            }
+          };
+        });
+        showNotification(`Replaced image for session: ${mapId}`);
+        resolve(dataUrl);
       };
       reader.onerror = reject;
       reader.readAsDataURL(file);
@@ -913,6 +1171,8 @@ export const ManualProvider = ({ children }) => {
         deletePictureSessionFromPage,
         movePictureSessionInMarkdown,
         insertLocalImageSession,
+        registerLocalImageSession,
+        replacePictureSessionImage,
         updateHeader,
         exportAllData,
         importAllData,

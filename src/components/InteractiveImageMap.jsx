@@ -173,10 +173,10 @@ const InteractiveImageMap = ({ id }) => {
     <div className={`interactive-map-container ${isEditMode ? 'map-edit-active' : ''}`}>
       {/* Edit Mode Header Toolbar for Image Block */}
       {isEditMode && (
-        <div className="map-studio-toolbar">
-          <div className="studio-info">
+        <div className="studio-header">
+          <div className="studio-title-group">
             <span className="studio-badge">🖼️ {config.title || 'Picture Session'}</span>
-            <span className="studio-tip">Drag dots seamlessly • Click dot to edit</span>
+            <span className="studio-hint">Drag dots seamlessly • Click dot to edit</span>
           </div>
 
           <div className="studio-actions-group">
@@ -289,25 +289,29 @@ const InteractiveImageMap = ({ id }) => {
               )}
               
               {/* View Mode Tooltip */}
-              {!isEditMode && activeHotspot?.id === hotspot.id && (
-                <div 
-                  className={`hotspot-tooltip placement-${hotspot.placement || 'bottom'}`}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="tooltip-header">
-                    <span className="tooltip-badge">{hotspot.badge || 'Step Info'}</span>
-                    <button 
-                      className="close-tooltip" 
-                      onClick={(e) => { e.stopPropagation(); setActiveHotspot(null); }}
-                      aria-label="Close tooltip"
-                    >
-                      &times;
-                    </button>
+              {!isEditMode && activeHotspot?.id === hotspot.id && (() => {
+                const hAlign = displayX > 68 ? 'align-right' : displayX < 32 ? 'align-left' : 'align-center';
+                const vPlacement = hotspot.placement || (displayY > 65 ? 'top' : 'bottom');
+                return (
+                  <div 
+                    className={`hotspot-tooltip placement-${vPlacement} ${hAlign}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="tooltip-header">
+                      <span className="tooltip-badge">{hotspot.badge || 'Step Info'}</span>
+                      <button 
+                        className="close-tooltip" 
+                        onClick={(e) => { e.stopPropagation(); setActiveHotspot(null); }}
+                        aria-label="Close tooltip"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                    <h4>{hotspot.title}</h4>
+                    <p>{hotspot.description}</p>
                   </div>
-                  <h4>{hotspot.title}</h4>
-                  <p>{hotspot.description}</p>
-                </div>
-              )}
+                );
+              })()}
             </div>
           );
         })}

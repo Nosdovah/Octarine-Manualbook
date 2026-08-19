@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useManual } from '../context/ManualContext';
 import './HotspotEditorModal.css';
@@ -43,7 +44,7 @@ const NewPageModal = ({ isOpen, onClose, defaultCategoryId }) => {
     navigate(`/manual/${createdSlug}`);
   };
 
-  return (
+  const modalElement = (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
@@ -130,6 +131,8 @@ const NewPageModal = ({ isOpen, onClose, defaultCategoryId }) => {
       </div>
     </div>
   );
+
+  return createPortal(modalElement, document.body);
 };
 
 export default NewPageModal;

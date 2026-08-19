@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useManual } from '../context/ManualContext';
 import './HotspotEditorModal.css';
 import './ImageSessionModal.css';
@@ -18,11 +19,11 @@ const ImageSessionModal = ({ isOpen, onClose, onSessionCreated, editingMapId = n
     if (isOpen) {
       if (isEditing) {
         const conf = mapConfigs[editingMapId];
-        setSessionTitle(conf.title || '');
+        setSessionTitle(conf?.title || '');
         setMapId(editingMapId);
-        setImageUrl(conf.imageUrl || '');
-        setImagePreview(conf.imageUrl || '');
-        setAltText(conf.altText || '');
+        setImageUrl(conf?.imageUrl || '');
+        setImagePreview(conf?.imageUrl || '');
+        setAltText(conf?.altText || '');
       } else {
         setSessionTitle('');
         setMapId('');
@@ -31,7 +32,7 @@ const ImageSessionModal = ({ isOpen, onClose, onSessionCreated, editingMapId = n
         setAltText('');
       }
     }
-  }, [isOpen, editingMapId, isEditing]);
+  }, [isOpen, editingMapId, isEditing, mapConfigs]);
 
   if (!isOpen) return null;
 
@@ -101,7 +102,7 @@ const ImageSessionModal = ({ isOpen, onClose, onSessionCreated, editingMapId = n
     }
   };
 
-  return (
+  const modalElement = (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content session-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
@@ -113,7 +114,7 @@ const ImageSessionModal = ({ isOpen, onClose, onSessionCreated, editingMapId = n
 
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="form-group">
-            <label>Local Image Upload</label>
+            <label>Image Source</label>
             <div className="source-tabs">
               <button 
                 type="button" 
@@ -225,6 +226,8 @@ const ImageSessionModal = ({ isOpen, onClose, onSessionCreated, editingMapId = n
       </div>
     </div>
   );
+
+  return createPortal(modalElement, document.body);
 };
 
 export default ImageSessionModal;

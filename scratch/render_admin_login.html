@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Octarine Admin Login Screen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 1800px;
+      height: 1000px;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 30%, #ffffff 0%, #f4f6f8 100%);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Browser Chrome Top Bar */
+    .browser-chrome {
+      height: 64px;
+      background: #18181b;
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      user-select: none;
+    }
+
+    .browser-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .nav-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    .url-bar-container {
+      flex: 0 0 760px;
+      height: 42px;
+      background: #09090b;
+      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      gap: 12px;
+    }
+
+    .lock-icon {
+      color: #22c55e;
+      font-size: 15px;
+    }
+
+    .url-text {
+      color: #f8fafc;
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+    }
+
+    .url-path {
+      color: #94a3b8;
+      font-weight: 400;
+    }
+
+    .browser-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 14px;
+      color: #94a3b8;
+      font-size: 18px;
+    }
+
+    /* Page Body */
+    .page-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding-bottom: 30px;
+    }
+
+    /* Brand Header */
+    .brand-section {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .brand-logo {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 82px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #09090b;
+      line-height: 1;
+    }
+
+    .brand-tagline {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: #71717a;
+      margin-top: 8px;
+    }
+
+    /* Login Card */
+    .login-card {
+      width: 580px;
+      background: #ffffff;
+      border-radius: 20px;
+      border: 1px solid #e4e4e7;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.09), 0 4px 18px rgba(0, 0, 0, 0.03);
+      padding: 44px 48px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .welcome-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: #71717a;
+      margin-bottom: 6px;
+    }
+
+    .sign-in-heading {
+      font-size: 26px;
+      font-weight: 700;
+      color: #09090b;
+      letter-spacing: -0.02em;
+    }
+
+    .form-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #27272a;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .text-input {
+      width: 100%;
+      height: 52px;
+      background: #ffffff;
+      border: 1.5px solid #d4d4d8;
+      border-radius: 12px;
+      padding: 0 18px;
+      font-size: 16px;
+      color: #09090b;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 16px;
+      color: #71717a;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    .submit-button {
+      margin-top: 10px;
+      height: 54px;
+      background: #09090b;
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(9, 9, 11, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar (Step 1) -->
+  <div class="browser-chrome">
+    <div class="browser-controls">
+      <div class="nav-btn">‹</div>
+      <div class="nav-btn">›</div>
+      <div class="nav-btn">↻</div>
+    </div>
+    <div class="url-bar-container">
+      <span class="lock-icon">🔒</span>
+      <span class="url-text">https://octarine.co.id<span class="url-path">/admin/login</span></span>
+    </div>
+    <div class="browser-actions">
+      <span>⋮</span>
+    </div>
+  </div>
+
+  <!-- Page Content -->
+  <div class="page-content">
+    
+    <!-- Brand Header (Portal Target) -->
+    <div class="brand-section">
+      <h1 class="brand-logo">Octarinē.</h1>
+      <p class="brand-tagline">Eau De Parfum</p>
+    </div>
+
+    <!-- Login Card -->
+    <div class="login-card">
+      <div class="card-header">
+        <p class="welcome-text">Welcome Back!</p>
+        <h2 class="sign-in-heading">Sign in to your account</h2>
+      </div>
+
+      <div class="form-fields">
+        <!-- Step 2: Email -->
+        <div class="field-group">
+          <label class="field-label">Email</label>
+          <div class="input-wrapper">
+            <input type="text" class="text-input" value="admin@octarine.co.id" readonly />
+          </div>
+        </div>
+
+        <!-- Step 3: Password -->
+        <div class="field-group">
+          <label class="field-label">Password</label>
+          <div class="input-wrapper">
+            <input type="password" class="text-input" value="••••••••••••" readonly />
+            <div class="password-toggle">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: Sign In Button -->
+        <button class="submit-button" type="button">
+          Sign in
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

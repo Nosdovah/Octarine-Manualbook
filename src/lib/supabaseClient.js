@@ -168,3 +168,87 @@ export const syncHeaderToSupabase = async (headerConfig) => {
     console.error('Supabase syncHeader error:', err);
   }
 };
+
+/**
+ * Sync Category to Supabase
+ */
+export const upsertCategoryToSupabase = async (category) => {
+  if (!supabase) return;
+  try {
+    await supabase
+      .from('doc_categories')
+      .upsert({
+        id: category.id,
+        title: category.title,
+        sort_order: category.sort_order || 0
+      });
+  } catch (err) {
+    console.error('Supabase upsertCategory error:', err);
+  }
+};
+
+export const deleteCategoryFromSupabase = async (categoryId) => {
+  if (!supabase) return;
+  try {
+    await supabase.from('doc_categories').delete().eq('id', categoryId);
+  } catch (err) {
+    console.error('Supabase deleteCategory error:', err);
+  }
+};
+
+/**
+ * Sync Page Metadata to Supabase
+ */
+export const upsertPageToSupabase = async (page, categoryId, sortOrder) => {
+  if (!supabase) return;
+  try {
+    await supabase
+      .from('doc_pages')
+      .upsert({
+        id: page.id,
+        category_id: categoryId,
+        title: page.title,
+        slug: page.slug,
+        sort_order: sortOrder
+      });
+  } catch (err) {
+    console.error('Supabase upsertPage error:', err);
+  }
+};
+
+export const deletePageFromSupabase = async (pageId) => {
+  if (!supabase) return;
+  try {
+    await supabase.from('doc_pages').delete().eq('id', pageId);
+  } catch (err) {
+    console.error('Supabase deletePage error:', err);
+  }
+};
+
+/**
+ * Sync Interactive Map (Picture Session) to Supabase
+ */
+export const upsertInteractiveMapToSupabase = async (mapId, mapData) => {
+  if (!supabase) return;
+  try {
+    await supabase
+      .from('interactive_maps')
+      .upsert({
+        id: mapId,
+        title: mapData.title || '',
+        image_url: mapData.imageUrl || '',
+        alt_text: mapData.altText || ''
+      });
+  } catch (err) {
+    console.error('Supabase upsertInteractiveMap error:', err);
+  }
+};
+
+export const deleteInteractiveMapFromSupabase = async (mapId) => {
+  if (!supabase) return;
+  try {
+    await supabase.from('interactive_maps').delete().eq('id', mapId);
+  } catch (err) {
+    console.error('Supabase deleteInteractiveMap error:', err);
+  }
+};
