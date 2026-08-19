@@ -8,7 +8,7 @@ const Sidebar = () => {
   const { 
     docsStructure, 
     isEditMode, 
-    isSidebarOpen,
+    isSidebarOpen, 
     toggleSidebar,
     addCategory, 
     renameCategory, 
@@ -71,39 +71,39 @@ const Sidebar = () => {
       <aside className={`sidebar ${!isSidebarOpen ? 'sidebar-hidden' : ''} ${isEditMode ? 'sidebar-editing' : ''}`}>
         <div className="sidebar-inner">
           <div className="sidebar-header-row">
-            <div className="sidebar-header-left">
+            <div className="sidebar-header-top">
               <h3 className="sidebar-title">Documentation</h3>
-            </div>
-            
-            <div className="sidebar-header-actions">
-              {isEditMode && (
-                <button 
-                  type="button" 
-                  className="btn-sidebar-add-cat"
-                  onClick={handleAddCategoryPrompt}
-                  title="Add a new navigation category"
-                >
-                  + Category
-                </button>
-              )}
               <button 
                 type="button" 
                 className="btn-sidebar-toggle-hide"
                 onClick={toggleSidebar}
-                title="Hide Sidebar"
+                title="Hide Sidebar Navigation"
                 aria-label="Hide Sidebar"
               >
                 <span>◀</span>
                 <span>Hide</span>
               </button>
             </div>
+            
+            {isEditMode && (
+              <div className="sidebar-header-edit-bar">
+                <button 
+                  type="button" 
+                  className="btn-sidebar-add-cat"
+                  onClick={handleAddCategoryPrompt}
+                  title="Add a new navigation category"
+                >
+                  + Add Category
+                </button>
+              </div>
+            )}
           </div>
 
           <nav className="sidebar-nav">
             {docsStructure.map((category) => (
               <div key={category.id} className="nav-group">
                 <div className="nav-group-header">
-                  <h4 className="nav-group-title">{category.title}</h4>
+                  <h4 className="nav-group-title" title={category.title}>{category.title}</h4>
                   {isEditMode && (
                     <div className="cat-edit-actions">
                       <button 
@@ -141,7 +141,7 @@ const Sidebar = () => {
                         to={`/manual/${item.slug}`}
                         className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
                       >
-                        <span className="nav-link-text">{item.title}</span>
+                        <span className="nav-link-text" title={item.title}>{item.title}</span>
                       </NavLink>
                       {isEditMode && (
                         <div className="page-edit-actions">
