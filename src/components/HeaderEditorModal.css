@@ -1,0 +1,92 @@
+.header-modal {
+  max-width: 620px;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.section-title-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.btn-add-item {
+  background: #f0f0f0;
+  border: 1px solid #d0d0d0;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #111111;
+  transition: all 0.2s;
+}
+
+.btn-add-item:hover {
+  background: #111111;
+  color: #ffffff;
+}
+
+.nav-links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.nav-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fcfcfc;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #e8e8e8;
+}
+
+.nav-label-input {
+  width: 130px !important;
+  font-weight: 600;
+  font-size: 0.85rem !important;
+  padding: 6px 8px !important;
+}
+
+.nav-url-input {
+  flex: 1 !important;
+  font-size: 0.85rem !important;
+  padding: 6px 8px !important;
+}
+
+.checkbox-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: #555555;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-delete-link {
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.btn-delete-link:hover {
+  background: #ffe0e0;
+}
