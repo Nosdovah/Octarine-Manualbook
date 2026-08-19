@@ -75,7 +75,27 @@
 .editor-insert-map-group {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
+}
+
+.btn-upload-local-file {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-upload-local-file:hover {
+  background: #1d4ed8;
 }
 
 .map-picker-select {
@@ -85,7 +105,7 @@
   font-size: 0.8rem;
   background: #ffffff;
   color: #111111;
-  max-width: 220px;
+  max-width: 200px;
 }
 
 .btn-insert-session {
@@ -187,6 +207,13 @@
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
   min-width: 280px;
+  position: relative;
+  transition: border-color 0.2s;
+}
+
+.editor-pane.editor-pane-dragover {
+  border: 2px dashed #2563eb;
+  background: #eff6ff;
 }
 
 .preview-pane {
@@ -254,6 +281,64 @@
   color: var(--text-light);
 }
 
+/* Quick Session Chips Bar */
+.session-chips-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #f4f4f5;
+  border-bottom: 1px solid #e4e4e7;
+  overflow-x: auto;
+}
+
+.chips-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #71717a;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chips-scroll {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.session-chip {
+  background: #ffffff;
+  border: 1px solid #d4d4d8;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #18181b;
+  cursor: grab;
+  user-select: none;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.session-chip:hover {
+  background: #18181b;
+  color: #ffffff;
+  border-color: #18181b;
+  transform: translateY(-1px);
+}
+
+.session-chip:active {
+  cursor: grabbing;
+}
+
+.textarea-wrapper {
+  position: relative;
+  display: flex;
+  flex: 1;
+}
+
 .content-textarea {
   flex: 1;
   min-height: 650px;
@@ -268,6 +353,31 @@
   outline: none;
   width: 100%;
   box-sizing: border-box;
+}
+
+.drag-drop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(37, 99, 235, 0.12);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.drop-badge {
+  background: #2563eb;
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
 }
 
 .content-inner {

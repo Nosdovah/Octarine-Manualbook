@@ -724,6 +724,21 @@ export const ManualProvider = ({ children }) => {
     return cleanId;
   };
 
+  const updatePictureSession = (mapId, updatedData) => {
+    setMapConfigs(prev => {
+      const existing = prev[mapId];
+      if (!existing) return prev;
+      return {
+        ...prev,
+        [mapId]: {
+          ...existing,
+          ...updatedData
+        }
+      };
+    });
+    showNotification('Updated picture session details');
+  };
+
   const deletePictureSession = (mapId) => {
     setMapConfigs(prev => {
       const next = { ...prev };
@@ -731,6 +746,83 @@ export const ManualProvider = ({ children }) => {
       return next;
     });
     showNotification('Deleted picture session');
+  };
+
+  const deletePictureSessionFromPage = (currentSlug, mapId) => {
+    const currentText = pagesContent[currentSlug] || '';
+    const regex = new RegExp(`\`\`\`interactive-map\\s*${mapId}\\s*\`\`\`\\n*`, 'g');
+    const updatedText = currentText.replace(regex, '').trim();
+    updatePageContent(currentSlug, updatedText);
+    showNotification('Removed image from page');
+  };
+
+  const movePictureSessionInMarkdown = (currentSlug, mapId, direction) => {
+    const currentText = pagesContent[currentSlug] || '';
+    const blocks = currentText.split(/\n{2,}/);
+    const targetIdx = blocks.findIndex(b => b.includes('```interactive-map') && b.includes(mapId));
+    
+    if (targetIdx === -1) {
+      showNotification('Picture session block not found in page');
+      return;
+    }
+
+    if (direction === 'up') {
+      if (targetIdx === 0) {
+        showNotification('Image is already at the top');
+        return;
+      }
+      const newBlocks = [...blocks];
+      const temp = newBlocks[targetIdx - 1];
+      newBlocks[targetIdx - 1] = newBlocks[targetIdx];
+      newBlocks[targetIdx] = temp;
+      updatePageContent(currentSlug, newBlocks.join('\n\n'));
+      showNotification('Moved image up between paragraphs');
+    } else if (direction === 'down') {
+      if (targetIdx === blocks.length - 1) {
+        showNotification('Image is already at the bottom');
+        return;
+      }
+      const newBlocks = [...blocks];
+      const temp = newBlocks[targetIdx + 1];
+      newBlocks[targetIdx + 1] = newBlocks[targetIdx];
+      newBlocks[targetIdx] = temp;
+      updatePageContent(currentSlug, newBlocks.join('\n\n'));
+      showNotification('Moved image down between paragraphs');
+    }
+  };
+
+  const insertLocalImageSession = (file, currentSlug, insertPosition = null) => {
+    return new Promise((resolve, reject) => {
+      if (!file) {
+        reject(new Error('No file provided'));
+        return;
+      }
+      const rawName = file.name.replace(/\.[^/.]+$/, '');
+      const cleanTitle = rawName.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const mapId = 'img-' + Date.now();
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        addPictureSession(mapId, cleanTitle, dataUrl, cleanTitle);
+
+        const currentText = pagesContent[currentSlug] || '';
+        const snippet = `\n\n\`\`\`interactive-map\n${mapId}\n\`\`\`\n\n`;
+
+        let updatedText;
+        if (typeof insertPosition === 'number' && insertPosition >= 0 && insertPosition <= currentText.length) {
+          updatedText = currentText.slice(0, insertPosition) + snippet + currentText.slice(insertPosition);
+        } else {
+          updatedText = currentText + snippet;
+        }
+
+        updatePageContent(currentSlug, updatedText);
+        showNotification(`Uploaded local image: ${file.name}`);
+        resolve(mapId);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   // Header Config actions
@@ -816,7 +908,11 @@ export const ManualProvider = ({ children }) => {
         updateHotspot,
         deleteHotspot,
         addPictureSession,
+        updatePictureSession,
         deletePictureSession,
+        deletePictureSessionFromPage,
+        movePictureSessionInMarkdown,
+        insertLocalImageSession,
         updateHeader,
         exportAllData,
         importAllData,

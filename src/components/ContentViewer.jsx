@@ -11,6 +11,7 @@ const ContentViewer = ({ slug }) => {
     mapConfigs, 
     isEditMode,
     isSidebarOpen,
+    insertLocalImageSession,
     showNotification 
   } = useManual();
 
@@ -21,7 +22,10 @@ const ContentViewer = ({ slug }) => {
   const [editorLayout, setEditorLayout] = useState('split'); // 'split' | 'edit-only' | 'preview-only'
   const [editorSplitRatio, setEditorSplitRatio] = useState(50); // percentage (20 to 85)
   const [selectedMapToInsert, setSelectedMapToInsert] = useState('');
+  const [isDragOverEditor, setIsDragOverEditor] = useState(false);
+
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Sync state when page changes
   useEffect(() => {
@@ -51,14 +55,68 @@ const ContentViewer = ({ slug }) => {
     }, 50);
   };
 
-  const handleInsertMap = () => {
-    if (!selectedMapToInsert) {
+  const handleInsertMap = (mapIdToUse = null) => {
+    const targetId = mapIdToUse || selectedMapToInsert;
+    if (!targetId) {
       alert('Please choose an interactive picture session from the dropdown first.');
       return;
     }
-    const snippet = `\n\n\`\`\`interactive-map\n${selectedMapToInsert}\n\`\`\`\n\n`;
+    const snippet = `\n\n\`\`\`interactive-map\n${targetId}\n\`\`\`\n\n`;
     insertSnippet(snippet);
-    showNotification(`Inserted picture session: ${selectedMapToInsert}`);
+    showNotification(`Inserted picture session: ${targetId}`);
+  };
+
+  // Direct local file upload from machine
+  const handleLocalImageSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const cursor = textareaRef.current ? textareaRef.current.selectionStart : null;
+        await insertLocalImageSession(file, currentSlug, cursor);
+      } catch (err) {
+        alert('Failed to upload image: ' + err.message);
+      }
+    }
+    // reset input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Drag-and-drop local image file over editor
+  const handleEditorDragOver = (e) => {
+    if (!isEditMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverEditor(true);
+  };
+
+  const handleEditorDragLeave = (e) => {
+    if (!isEditMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverEditor(false);
+  };
+
+  const handleEditorDrop = async (e) => {
+    if (!isEditMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverEditor(false);
+
+    // 1. If dropping a local image file from computer
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('image/')) {
+        const cursor = textareaRef.current ? textareaRef.current.selectionStart : null;
+        await insertLocalImageSession(file, currentSlug, cursor);
+        return;
+      }
+    }
+
+    // 2. If dragging a picture session chip
+    const droppedMapId = e.dataTransfer.getData('text/plain');
+    if (droppedMapId && mapConfigs[droppedMapId]) {
+      handleInsertMap(droppedMapId);
+    }
   };
 
   return (
@@ -78,14 +136,30 @@ const ContentViewer = ({ slug }) => {
             <button type="button" className="tool-btn" onClick={() => insertSnippet('| Feature | Detail |\n| :--- | :--- |\n| Item 1 | Value 1 |\n')} title="Table">Table</button>
           </div>
 
-          {/* Picture Session Insertion */}
+          {/* Local File Upload & Session Insertion */}
           <div className="editor-insert-map-group">
+            <button 
+              type="button" 
+              className="btn-upload-local-file" 
+              onClick={() => fileInputRef.current?.click()}
+              title="Upload an image file directly from your local computer"
+            >
+              📁 Upload Local Image
+            </button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              accept="image/*" 
+              onChange={handleLocalImageSelect} 
+              style={{ display: 'none' }} 
+            />
+
             <select 
               value={selectedMapToInsert} 
               onChange={(e) => setSelectedMapToInsert(e.target.value)}
               className="map-picker-select"
             >
-              <option value="">-- Insert Picture Session --</option>
+              <option value="">-- Insert Existing Picture --</option>
               {Object.entries(mapConfigs).map(([mId, mConf]) => (
                 <option key={mId} value={mId}>{mConf.title || mId}</option>
               ))}
@@ -93,7 +167,7 @@ const ContentViewer = ({ slug }) => {
             <button 
               type="button" 
               className="btn-insert-session" 
-              onClick={handleInsertMap}
+              onClick={() => handleInsertMap()}
             >
               + Insert Picture
             </button>
@@ -157,7 +231,12 @@ const ContentViewer = ({ slug }) => {
       >
         {/* Editor Pane (Only in Edit Mode) */}
         {isEditMode && editorLayout !== 'preview-only' && (
-          <div className="editor-pane">
+          <div 
+            className={`editor-pane ${isDragOverEditor ? 'editor-pane-dragover' : ''}`}
+            onDragOver={handleEditorDragOver}
+            onDragLeave={handleEditorDragLeave}
+            onDrop={handleEditorDrop}
+          >
             <div className="pane-header">
               <span className="pane-title">Markdown & Content Body Form</span>
               <div className="pane-presets">
@@ -167,14 +246,41 @@ const ContentViewer = ({ slug }) => {
                 <button type="button" className="preset-btn" onClick={() => setEditorSplitRatio(85)}>85%</button>
               </div>
             </div>
-            <textarea
-              ref={textareaRef}
-              className="content-textarea"
-              value={editorText}
-              onChange={handleTextChange}
-              placeholder="Write your manual content, markdown headers, and insert interactive picture sessions here..."
-              spellCheck="false"
-            />
+
+            {/* Quick Draggable Session Chips */}
+            <div className="session-chips-bar">
+              <span className="chips-title">Drag & Drop Images:</span>
+              <div className="chips-scroll">
+                {Object.entries(mapConfigs).map(([mId, mConf]) => (
+                  <div
+                    key={mId}
+                    className="session-chip"
+                    draggable
+                    onDragStart={(e) => e.dataTransfer.setData('text/plain', mId)}
+                    onClick={() => handleInsertMap(mId)}
+                    title="Drag into editor or click to insert between text"
+                  >
+                    🖼️ {mConf.title || mId}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="textarea-wrapper">
+              <textarea
+                ref={textareaRef}
+                className="content-textarea"
+                value={editorText}
+                onChange={handleTextChange}
+                placeholder="Write your manual content, markdown headers, and drop local images directly between text..."
+                spellCheck="false"
+              />
+              {isDragOverEditor && (
+                <div className="drag-drop-overlay">
+                  <div className="drop-badge">📸 Drop local image file here to insert seamlessly</div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
