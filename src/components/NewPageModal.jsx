@@ -24,7 +24,6 @@ const NewPageModal = ({ isOpen, onClose, defaultCategoryId }) => {
     let targetCatId = categoryId;
     if (isNewCategory && newCategoryTitle.trim()) {
       addCategory(newCategoryTitle.trim());
-      // we'll place it in the newly added or target
       targetCatId = 'cat-' + Date.now();
     }
     const createdSlug = addPage(targetCatId, title, slug);
@@ -37,7 +36,6 @@ const NewPageModal = ({ isOpen, onClose, defaultCategoryId }) => {
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title-wrap">
-            <span className="modal-icon">📄</span>
             <h3>Create New Guide Page</h3>
           </div>
           <button className="modal-close-btn" onClick={onClose}>&times;</button>

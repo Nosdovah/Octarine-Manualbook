@@ -2,17 +2,27 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - var(--nav-height));
+  min-height: calc(100vh - 100px);
   background-color: var(--bg-color);
-  padding: 3rem 4rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 3rem 4.5rem;
+  max-width: 100%;
   width: 100%;
   box-sizing: border-box;
+  transition: margin-left 0.3s cubic-bezier(0.16, 1, 0.3, 1), width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.content-viewer.with-sidebar {
+  margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
+}
+
+.content-viewer.full-width {
+  margin-left: 0;
+  width: 100%;
+  padding: 3rem 6rem;
 }
 
 .content-viewer.mode-editing {
-  max-width: 100%;
   padding: 1.5rem 2rem 6rem 2rem;
 }
 
@@ -24,7 +34,7 @@
   gap: 12px;
   background: #f7f7f7;
   border: 1px solid var(--border-color);
-  padding: 8px 14px;
+  padding: 10px 16px;
   border-radius: 8px;
   margin-bottom: 1.5rem;
 }
@@ -33,16 +43,16 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 5px;
 }
 
 .tool-btn {
   background: #ffffff;
   border: 1px solid #d4d4d4;
   color: #222222;
-  padding: 5px 9px;
+  padding: 5px 10px;
   border-radius: 4px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -75,15 +85,16 @@
   font-size: 0.8rem;
   background: #ffffff;
   color: #111111;
+  max-width: 220px;
 }
 
 .btn-insert-session {
   background: #111111;
   color: #ffffff;
   border: none;
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: 4px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -91,6 +102,35 @@
 
 .btn-insert-session:hover {
   background: #333333;
+}
+
+.editor-layout-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.split-slider-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #dcdcdc;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.split-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #333333;
+  white-space: nowrap;
+}
+
+.split-slider-input {
+  width: 100px;
+  cursor: ew-resize;
+  accent-color: #111111;
 }
 
 .editor-layout-group {
@@ -104,7 +144,7 @@
 .layout-btn {
   background: transparent;
   border: none;
-  padding: 4px 10px;
+  padding: 5px 10px;
   font-size: 0.78rem;
   border-radius: 4px;
   cursor: pointer;
@@ -128,8 +168,7 @@
 
 .content-body-grid.layout-split {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 20px;
   align-items: stretch;
 }
 
@@ -147,12 +186,14 @@
   background: #ffffff;
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  min-width: 280px;
 }
 
 .preview-pane {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
 }
 
 .grid-editing .preview-pane {
@@ -179,9 +220,33 @@
 }
 
 .pane-title {
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.pane-presets {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.preset-btn {
+  background: #ffffff;
+  border: 1px solid #d4d4d4;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: #555555;
+  transition: all 0.15s;
+}
+
+.preset-btn:hover {
+  background: #111111;
+  color: #ffffff;
+  border-color: #111111;
 }
 
 .pane-hint {
@@ -191,22 +256,39 @@
 
 .content-textarea {
   flex: 1;
-  min-height: 600px;
-  padding: 16px;
+  min-height: 650px;
+  padding: 18px;
   border: none;
   resize: vertical;
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  font-size: 0.9rem;
-  line-height: 1.6;
+  font-size: 0.92rem;
+  line-height: 1.65;
   color: #1a1a1a;
   background: #ffffff;
   outline: none;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .content-inner {
-  max-width: 850px;
+  max-width: 100%;
+  width: 100%;
 }
 
 .grid-editing .content-inner {
   max-width: 100%;
+}
+
+@media (max-width: 992px) {
+  .content-viewer.with-sidebar {
+    margin-left: 0;
+    width: 100%;
+    padding: 2rem 1.5rem;
+  }
+  .content-viewer.full-width {
+    padding: 2rem 1.5rem;
+  }
+  .content-body-grid.layout-split {
+    grid-template-columns: 1fr !important;
+  }
 }

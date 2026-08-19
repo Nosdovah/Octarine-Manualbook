@@ -54,7 +54,6 @@ const ImageSessionModal = ({ isOpen, onClose, onSessionCreated }) => {
       <div className="modal-content session-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title-wrap">
-            <span className="modal-icon">🖼️</span>
             <h3>Add New Picture Session / Screenshot</h3>
           </div>
           <button className="modal-close-btn" onClick={onClose}>&times;</button>
@@ -92,14 +91,14 @@ const ImageSessionModal = ({ isOpen, onClose, onSessionCreated }) => {
                 className={`source-tab ${imageSourceType === 'upload' ? 'active' : ''}`}
                 onClick={() => setImageSourceType('upload')}
               >
-                📁 Upload Local Image File
+                Upload Local Image File
               </button>
               <button 
                 type="button" 
                 className={`source-tab ${imageSourceType === 'url' ? 'active' : ''}`}
                 onClick={() => setImageSourceType('url')}
               >
-                🔗 Image URL
+                Image URL
               </button>
             </div>
           </div>
@@ -120,7 +119,6 @@ const ImageSessionModal = ({ isOpen, onClose, onSessionCreated }) => {
                   </div>
                 ) : (
                   <div className="dropzone-placeholder">
-                    <span className="dropzone-icon">📸</span>
                     <p className="dropzone-title">Click to browse or drop screenshot image</p>
                     <p className="dropzone-subtitle">Supports PNG, JPG, WebP, SVG</p>
                   </div>

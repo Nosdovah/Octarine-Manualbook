@@ -10,6 +10,7 @@ const ContentViewer = ({ slug }) => {
     updatePageContent, 
     mapConfigs, 
     isEditMode,
+    isSidebarOpen,
     showNotification 
   } = useManual();
 
@@ -18,6 +19,7 @@ const ContentViewer = ({ slug }) => {
 
   const [editorText, setEditorText] = useState(content);
   const [editorLayout, setEditorLayout] = useState('split'); // 'split' | 'edit-only' | 'preview-only'
+  const [editorSplitRatio, setEditorSplitRatio] = useState(50); // percentage (20 to 85)
   const [selectedMapToInsert, setSelectedMapToInsert] = useState('');
   const textareaRef = useRef(null);
 
@@ -60,7 +62,7 @@ const ContentViewer = ({ slug }) => {
   };
 
   return (
-    <div className={`content-viewer ${isEditMode ? 'mode-editing' : ''}`}>
+    <div className={`content-viewer ${isSidebarOpen ? 'with-sidebar' : 'full-width'} ${isEditMode ? 'mode-editing' : ''}`}>
       {/* Visual Editor Toolbar when in Edit Mode */}
       {isEditMode && (
         <div className="content-editor-bar">
@@ -69,11 +71,11 @@ const ContentViewer = ({ slug }) => {
             <button type="button" className="tool-btn" onClick={() => insertSnippet('### ')} title="Heading 3">H3</button>
             <button type="button" className="tool-btn font-bold" onClick={() => insertSnippet('**', '**')} title="Bold">B</button>
             <button type="button" className="tool-btn font-italic" onClick={() => insertSnippet('*', '*')} title="Italic">I</button>
-            <button type="button" className="tool-btn" onClick={() => insertSnippet('- ')} title="Bullet List">• List</button>
+            <button type="button" className="tool-btn" onClick={() => insertSnippet('- ')} title="Bullet List">List</button>
             <button type="button" className="tool-btn" onClick={() => insertSnippet('1. ')} title="Numbered List">1. List</button>
-            <button type="button" className="tool-btn" onClick={() => insertSnippet('> [!IMPORTANT]\n> ')} title="Important Alert">⚠️ Alert</button>
-            <button type="button" className="tool-btn" onClick={() => insertSnippet('> [!TIP]\n> ')} title="Tip Callout">💡 Tip</button>
-            <button type="button" className="tool-btn" onClick={() => insertSnippet('| Feature | Detail |\n| :--- | :--- |\n| Item 1 | Value 1 |\n')} title="Table">📊 Table</button>
+            <button type="button" className="tool-btn" onClick={() => insertSnippet('> [!IMPORTANT]\n> ')} title="Important Alert">Alert</button>
+            <button type="button" className="tool-btn" onClick={() => insertSnippet('> [!TIP]\n> ')} title="Tip Callout">Tip</button>
+            <button type="button" className="tool-btn" onClick={() => insertSnippet('| Feature | Detail |\n| :--- | :--- |\n| Item 1 | Value 1 |\n')} title="Table">Table</button>
           </div>
 
           {/* Picture Session Insertion */}
@@ -97,44 +99,73 @@ const ContentViewer = ({ slug }) => {
             </button>
           </div>
 
-          {/* Layout Controls */}
-          <div className="editor-layout-group">
-            <button 
-              type="button" 
-              className={`layout-btn ${editorLayout === 'split' ? 'active' : ''}`}
-              onClick={() => setEditorLayout('split')}
-              title="Side-by-side Editor and Live Preview"
-            >
-              Split View
-            </button>
-            <button 
-              type="button" 
-              className={`layout-btn ${editorLayout === 'edit-only' ? 'active' : ''}`}
-              onClick={() => setEditorLayout('edit-only')}
-              title="Editor only"
-            >
-              Editor Only
-            </button>
-            <button 
-              type="button" 
-              className={`layout-btn ${editorLayout === 'preview-only' ? 'active' : ''}`}
-              onClick={() => setEditorLayout('preview-only')}
-              title="Preview only"
-            >
-              Preview Only
-            </button>
+          {/* Layout Controls & Width Split Slider */}
+          <div className="editor-layout-controls">
+            {editorLayout === 'split' && (
+              <div className="split-slider-container">
+                <span className="split-label">Form: {editorSplitRatio}%</span>
+                <input 
+                  type="range" 
+                  min="20" 
+                  max="85" 
+                  value={editorSplitRatio} 
+                  onChange={(e) => setEditorSplitRatio(Number(e.target.value))}
+                  className="split-slider-input"
+                  title="Slide left or right to adjust editor vs preview width"
+                />
+              </div>
+            )}
+
+            <div className="editor-layout-group">
+              <button 
+                type="button" 
+                className={`layout-btn ${editorLayout === 'split' ? 'active' : ''}`}
+                onClick={() => setEditorLayout('split')}
+                title="Side-by-side Editor and Live Preview"
+              >
+                Split
+              </button>
+              <button 
+                type="button" 
+                className={`layout-btn ${editorLayout === 'edit-only' ? 'active' : ''}`}
+                onClick={() => setEditorLayout('edit-only')}
+                title="Editor only"
+              >
+                Editor Only
+              </button>
+              <button 
+                type="button" 
+                className={`layout-btn ${editorLayout === 'preview-only' ? 'active' : ''}`}
+                onClick={() => setEditorLayout('preview-only')}
+                title="Preview only"
+              >
+                Preview Only
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Editor Body Grid */}
-      <div className={`content-body-grid layout-${editorLayout} ${isEditMode ? 'grid-editing' : ''}`}>
+      <div 
+        className={`content-body-grid layout-${editorLayout} ${isEditMode ? 'grid-editing' : ''}`}
+        style={
+          isEditMode && editorLayout === 'split' 
+            ? { gridTemplateColumns: `${editorSplitRatio}% calc(100% - ${editorSplitRatio}% - 20px)` }
+            : {}
+        }
+      >
         {/* Editor Pane (Only in Edit Mode) */}
         {isEditMode && editorLayout !== 'preview-only' && (
           <div className="editor-pane">
             <div className="pane-header">
-              <span className="pane-title">📝 Markdown & Content Body Form</span>
-              <span className="pane-hint">Live auto-saving to local storage</span>
+              <span className="pane-title">Markdown & Content Body Form</span>
+              <div className="pane-presets">
+                <button type="button" className="preset-btn" onClick={() => setEditorSplitRatio(35)}>35%</button>
+                <button type="button" className="preset-btn" onClick={() => setEditorSplitRatio(50)}>50%</button>
+                <button type="button" className="preset-btn" onClick={() => setEditorSplitRatio(70)}>70%</button>
+                <button type="button" className="preset-btn" onClick={() => setEditorSplitRatio(85)}>85%</button>
+              </div>
             </div>
             <textarea
               ref={textareaRef}
@@ -152,7 +183,7 @@ const ContentViewer = ({ slug }) => {
           <div className="preview-pane">
             {isEditMode && (
               <div className="pane-header preview-header">
-                <span className="pane-title">👁️ Live Rendered Preview</span>
+                <span className="pane-title">Live Rendered Preview</span>
                 <span className="pane-hint">Real-time dynamic display</span>
               </div>
             )}

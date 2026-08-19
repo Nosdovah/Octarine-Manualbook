@@ -51,17 +51,17 @@ const EditModeToolbar = ({ currentSlug }) => {
               }}
               title="Standard locked reading mode"
             >
-              🔒 View Mode
+              View Mode
             </button>
             <button 
               className={`mode-btn ${isEditMode ? 'selected edit-active' : ''}`}
               onClick={() => {
                 setIsEditMode(true);
-                showNotification('Edit Mode Enabled: Click and drag dots or edit page content!');
+                showNotification('Edit Mode Enabled: Click and drag dots or edit page content');
               }}
               title="Unlock visual editing & draggable hotspots"
             >
-              ✏️ Edit Mode
+              Edit Mode
             </button>
           </div>
 
@@ -73,7 +73,7 @@ const EditModeToolbar = ({ currentSlug }) => {
                 onClick={() => setIsNewPageModalOpen(true)}
                 title="Create a new guide page"
               >
-                📄 + Page
+                + Page
               </button>
 
               <button 
@@ -81,7 +81,7 @@ const EditModeToolbar = ({ currentSlug }) => {
                 onClick={() => setIsSessionModalOpen(true)}
                 title="Upload screenshot or create interactive image session"
               >
-                🖼️ + Picture Session
+                + Picture Session
               </button>
 
               <button 
@@ -89,7 +89,7 @@ const EditModeToolbar = ({ currentSlug }) => {
                 onClick={() => setIsHeaderModalOpen(true)}
                 title="Customize top navbar, logo, and announcement ticker"
               >
-                🧭 Top Navbar
+                Top Navbar
               </button>
 
               <div className="dock-divider"></div>
@@ -99,7 +99,7 @@ const EditModeToolbar = ({ currentSlug }) => {
                 onClick={exportAllData}
                 title="Export complete configuration as JSON backup"
               >
-                💾 Export JSON
+                Export JSON
               </button>
 
               <button 
@@ -107,7 +107,7 @@ const EditModeToolbar = ({ currentSlug }) => {
                 onClick={() => fileInputRef.current?.click()}
                 title="Import configuration from JSON file"
               >
-                📥 Import
+                Import
               </button>
               <input 
                 type="file" 
@@ -122,26 +122,26 @@ const EditModeToolbar = ({ currentSlug }) => {
                 onClick={resetToDefaults}
                 title="Reset manual to initial defaults"
               >
-                🔄 Reset
+                Reset
               </button>
 
               <button 
                 className="dock-save-btn"
                 onClick={() => {
                   setIsEditMode(false);
-                  showNotification('All changes saved and locked!');
+                  showNotification('All changes saved and locked');
                 }}
               >
-                ✓ Finalize & Lock
+                Finalize & Lock
               </button>
             </div>
           )}
         </div>
 
-        {/* Global Toast / Status Notification */}
+        {/* Global Status Notification */}
         {statusMessage && (
           <div className="dock-toast animate-fade-in">
-            <span>✨ {statusMessage}</span>
+            <span>{statusMessage}</span>
           </div>
         )}
       </aside>

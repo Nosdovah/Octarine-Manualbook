@@ -1,5 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import adminLoginImg from '../assets/admin-login.png';
+import { 
+  fetchAllManualDataFromSupabase, 
+  isSupabaseConfigured,
+  syncPageContentToSupabase,
+  syncHotspotToSupabase,
+  deleteHotspotFromSupabase,
+  syncHeaderToSupabase
+} from '../lib/supabaseClient';
 
 const ManualContext = createContext();
 
@@ -7,7 +15,8 @@ const STORAGE_KEYS = {
   DOCS_STRUCTURE: 'octarine_docs_structure',
   PAGES_CONTENT: 'octarine_pages_content',
   MAP_CONFIGS: 'octarine_map_configs',
-  HEADER_CONFIG: 'octarine_header_config'
+  HEADER_CONFIG: 'octarine_header_config',
+  SIDEBAR_OPEN: 'octarine_sidebar_open'
 };
 
 const DEFAULT_DOCS_STRUCTURE = [
@@ -449,8 +458,45 @@ export const ManualProvider = ({ children }) => {
     }
   });
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.SIDEBAR_OPEN);
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
+  });
+
   const [isEditMode, setIsEditMode] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
+  const [isSupabaseConnected, setIsSupabaseConnected] = useState(isSupabaseConfigured);
+
+  // Toggle sidebar
+  const toggleSidebar = () => {
+    setIsSidebarOpen(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem(STORAGE_KEYS.SIDEBAR_OPEN, JSON.stringify(next));
+      } catch (e) { console.error(e); }
+      return next;
+    });
+  };
+
+  // Hydrate from Supabase if connected
+  useEffect(() => {
+    if (isSupabaseConfigured) {
+      fetchAllManualDataFromSupabase().then(dbData => {
+        if (dbData) {
+          if (dbData.docsStructure?.length) setDocsStructure(dbData.docsStructure);
+          if (Object.keys(dbData.pagesContent || {}).length) setPagesContent(dbData.pagesContent);
+          if (Object.keys(dbData.mapConfigs || {}).length) setMapConfigs(dbData.mapConfigs);
+          if (dbData.headerConfig) setHeaderConfig(dbData.headerConfig);
+          setIsSupabaseConnected(true);
+          showNotification('Connected to Supabase live database');
+        }
+      });
+    }
+  }, []);
 
   // Auto-save to localStorage
   useEffect(() => {
@@ -518,10 +564,15 @@ export const ManualProvider = ({ children }) => {
       return cat;
     }));
 
+    const finalContent = initialContent || `# ${title || 'New Page'}\n\nStart writing your content here...`;
     setPagesContent(prev => ({
       ...prev,
-      [pageSlug]: initialContent || `# ${title || 'New Page'}\n\nStart writing your content here...`
+      [pageSlug]: finalContent
     }));
+
+    if (isSupabaseConfigured) {
+      syncPageContentToSupabase(pageSlug, finalContent);
+    }
 
     showNotification('Added page: ' + (title || 'New Page'));
     return pageSlug;
@@ -559,17 +610,29 @@ export const ManualProvider = ({ children }) => {
       ...prev,
       [slug]: content
     }));
+    if (isSupabaseConfigured) {
+      syncPageContentToSupabase(slug, content);
+    }
     showNotification('Saved page content');
   };
 
   // Hotspot actions
   const moveHotspot = (mapId, hotspotId, x, y) => {
+    const roundedX = Math.round(x * 10) / 10;
+    const roundedY = Math.round(y * 10) / 10;
+    
     setMapConfigs(prev => {
       const map = prev[mapId];
       if (!map) return prev;
       const updatedHotspots = map.hotspots.map(hs => 
-        hs.id === hotspotId ? { ...hs, x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 } : hs
+        hs.id === hotspotId ? { ...hs, x: roundedX, y: roundedY } : hs
       );
+      
+      const movedHs = updatedHotspots.find(h => h.id === hotspotId);
+      if (movedHs && isSupabaseConfigured) {
+        syncHotspotToSupabase(mapId, movedHs);
+      }
+
       return {
         ...prev,
         [mapId]: { ...map, hotspots: updatedHotspots }
@@ -599,7 +662,12 @@ export const ManualProvider = ({ children }) => {
         }
       };
     });
-    showNotification('Added new step dot!');
+
+    if (isSupabaseConfigured) {
+      syncHotspotToSupabase(mapId, newHotspot);
+    }
+
+    showNotification('Added new step dot');
     return newHotspot.id;
   };
 
@@ -607,11 +675,16 @@ export const ManualProvider = ({ children }) => {
     setMapConfigs(prev => {
       const map = prev[mapId];
       if (!map) return prev;
+      const updatedList = map.hotspots.map(hs => hs.id === hotspotId ? { ...hs, ...updatedFields } : hs);
+      const targetHs = updatedList.find(h => h.id === hotspotId);
+      if (targetHs && isSupabaseConfigured) {
+        syncHotspotToSupabase(mapId, targetHs);
+      }
       return {
         ...prev,
         [mapId]: {
           ...map,
-          hotspots: map.hotspots.map(hs => hs.id === hotspotId ? { ...hs, ...updatedFields } : hs)
+          hotspots: updatedList
         }
       };
     });
@@ -630,6 +703,9 @@ export const ManualProvider = ({ children }) => {
         }
       };
     });
+    if (isSupabaseConfigured) {
+      deleteHotspotFromSupabase(hotspotId);
+    }
     showNotification('Deleted step dot');
   };
 
@@ -659,7 +735,13 @@ export const ManualProvider = ({ children }) => {
 
   // Header Config actions
   const updateHeader = (newHeaderConfig) => {
-    setHeaderConfig(prev => ({ ...prev, ...newHeaderConfig }));
+    setHeaderConfig(prev => {
+      const updated = { ...prev, ...newHeaderConfig };
+      if (isSupabaseConfigured) {
+        syncHeaderToSupabase(updated);
+      }
+      return updated;
+    });
     showNotification('Updated header settings');
   };
 
@@ -680,7 +762,7 @@ export const ManualProvider = ({ children }) => {
     a.download = `octarine_manual_backup_${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showNotification('Configuration exported successfully!');
+    showNotification('Configuration exported successfully');
   };
 
   const importAllData = (jsonData) => {
@@ -689,7 +771,7 @@ export const ManualProvider = ({ children }) => {
       if (jsonData.pagesContent) setPagesContent(jsonData.pagesContent);
       if (jsonData.mapConfigs) setMapConfigs(jsonData.mapConfigs);
       if (jsonData.headerConfig) setHeaderConfig(jsonData.headerConfig);
-      showNotification('Configuration imported successfully!');
+      showNotification('Configuration imported successfully');
       return true;
     } catch (err) {
       alert('Failed to import configuration: ' + err.message);
@@ -704,7 +786,7 @@ export const ManualProvider = ({ children }) => {
       setMapConfigs(DEFAULT_MAP_CONFIGS);
       setHeaderConfig(DEFAULT_HEADER_CONFIG);
       localStorage.clear();
-      showNotification('Reset to factory defaults.');
+      showNotification('Reset to factory defaults');
     }
   };
 
@@ -717,7 +799,10 @@ export const ManualProvider = ({ children }) => {
         headerConfig,
         isEditMode,
         setIsEditMode,
+        isSidebarOpen,
+        toggleSidebar,
         statusMessage,
+        isSupabaseConnected,
         showNotification,
         addCategory,
         renameCategory,

@@ -34,7 +34,6 @@ const HotspotEditorModal = ({ isOpen, onClose, hotspot, onSave, onDelete }) => {
       <div className="modal-content hotspot-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title-wrap">
-            <span className="modal-icon">📍</span>
             <h3>Edit Step Dot Info</h3>
           </div>
           <button className="modal-close-btn" onClick={onClose}>&times;</button>
@@ -50,7 +49,7 @@ const HotspotEditorModal = ({ isOpen, onClose, hotspot, onSave, onDelete }) => {
               placeholder="e.g. Step 1, Email, Action, Warning" 
               required 
             />
-            <span className="form-hint">Displayed inside the black badge tag in the tooltip</span>
+            <span className="form-hint">Displayed inside the badge tag in the tooltip</span>
           </div>
 
           <div className="form-group">
@@ -85,7 +84,7 @@ const HotspotEditorModal = ({ isOpen, onClose, hotspot, onSave, onDelete }) => {
                   className={`placement-btn ${placement === p ? 'active' : ''}`}
                   onClick={() => setPlacement(p)}
                 >
-                  {p === 'top' ? '⬆ Above Dot' : '⬇ Below Dot'}
+                  {p === 'top' ? 'Above Dot' : 'Below Dot'}
                 </button>
               ))}
             </div>

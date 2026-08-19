@@ -8,6 +8,8 @@ const Sidebar = () => {
   const { 
     docsStructure, 
     isEditMode, 
+    isSidebarOpen,
+    toggleSidebar,
     addCategory, 
     renameCategory, 
     deleteCategory, 
@@ -52,20 +54,53 @@ const Sidebar = () => {
 
   return (
     <>
-      <aside className={`sidebar ${isEditMode ? 'sidebar-editing' : ''}`}>
+      {/* Floating Toggle button to show sidebar when collapsed */}
+      {!isSidebarOpen && (
+        <button 
+          type="button" 
+          className="btn-sidebar-open-floating"
+          onClick={toggleSidebar}
+          title="Show Sidebar Menu"
+          aria-label="Show Sidebar Navigation"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+          <span>Show Menu</span>
+        </button>
+      )}
+
+      <aside className={`sidebar ${!isSidebarOpen ? 'sidebar-hidden' : ''} ${isEditMode ? 'sidebar-editing' : ''}`}>
         <div className="sidebar-inner">
           <div className="sidebar-header-row">
-            <h3 className="sidebar-title">Documentation</h3>
-            {isEditMode && (
+            <div className="sidebar-header-left">
+              <h3 className="sidebar-title">Documentation</h3>
+            </div>
+            
+            <div className="sidebar-header-actions">
+              {isEditMode && (
+                <button 
+                  type="button" 
+                  className="btn-sidebar-add-cat"
+                  onClick={handleAddCategoryPrompt}
+                  title="Add a new navigation category"
+                >
+                  + Category
+                </button>
+              )}
               <button 
                 type="button" 
-                className="btn-sidebar-add-cat"
-                onClick={handleAddCategoryPrompt}
-                title="Add a new navigation category"
+                className="btn-sidebar-toggle-hide"
+                onClick={toggleSidebar}
+                title="Hide Sidebar"
+                aria-label="Hide Sidebar"
               >
-                + Category
+                <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" strokeWidth="2" fill="none">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                <span>Hide</span>
               </button>
-            )}
+            </div>
           </div>
 
           <nav className="sidebar-nav">
@@ -81,7 +116,7 @@ const Sidebar = () => {
                         onClick={() => handleRenameCat(category.id, category.title)}
                         title="Rename Category"
                       >
-                        ✏️
+                        Edit
                       </button>
                       <button 
                         type="button" 
@@ -89,15 +124,15 @@ const Sidebar = () => {
                         onClick={() => setNewPageModalCatId(category.id)}
                         title="Add Page to this Category"
                       >
-                        ➕
+                        + Page
                       </button>
                       <button 
                         type="button" 
-                        className="cat-action-icon"
+                        className="cat-action-icon delete-icon"
                         onClick={() => handleDeleteCat(category.id, category.title)}
                         title="Delete Category"
                       >
-                        🗑️
+                        Delete
                       </button>
                     </div>
                   )}
@@ -120,15 +155,15 @@ const Sidebar = () => {
                             onClick={(e) => { e.preventDefault(); handleRenamePg(item.id, item.title); }}
                             title="Rename page title"
                           >
-                            ✏️
+                            Edit
                           </button>
                           <button 
                             type="button" 
-                            className="page-action-icon"
+                            className="page-action-icon delete-icon"
                             onClick={(e) => { e.preventDefault(); handleDeletePg(category.id, item.id, item.slug, item.title); }}
                             title="Delete page"
                           >
-                            ×
+                            Del
                           </button>
                         </div>
                       )}

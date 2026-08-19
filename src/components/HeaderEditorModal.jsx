@@ -55,7 +55,6 @@ const HeaderEditorModal = ({ isOpen, onClose }) => {
       <div className="modal-content header-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title-wrap">
-            <span className="modal-icon">🧭</span>
             <h3>Edit Top Navbar & Header</h3>
           </div>
           <button className="modal-close-btn" onClick={onClose}>&times;</button>
@@ -132,7 +131,7 @@ const HeaderEditorModal = ({ isOpen, onClose }) => {
                     onClick={() => handleDeleteLink(link.id)}
                     title="Remove link"
                   >
-                    🗑️
+                    Delete
                   </button>
                 </div>
               ))}

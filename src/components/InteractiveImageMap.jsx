@@ -4,7 +4,7 @@ import HotspotEditorModal from './HotspotEditorModal';
 import './InteractiveImageMap.css';
 
 const InteractiveImageMap = ({ id }) => {
-  const { mapConfigs, isEditMode, moveHotspot, addHotspot, updateHotspot, deleteHotspot, showNotification } = useManual();
+  const { mapConfigs, isEditMode, moveHotspot, addHotspot, updateHotspot, deleteHotspot } = useManual();
   const [activeHotspot, setActiveHotspot] = useState(null);
   const [editingHotspot, setEditingHotspot] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -165,7 +165,7 @@ const InteractiveImageMap = ({ id }) => {
             <div className="hotspot-dot"></div>
             
             {isEditMode && (
-              <span className="hotspot-mini-badge">{hotspot.badge || '📍'}</span>
+              <span className="hotspot-mini-badge">{hotspot.badge || 'Dot'}</span>
             )}
             
             {/* View Mode Tooltip */}
@@ -193,7 +193,6 @@ const InteractiveImageMap = ({ id }) => {
       </div>
 
       <div className="map-caption">
-        <span className="map-caption-icon">💡</span>
         <p>
           {isEditMode 
             ? 'Hotspot Studio Active: Changes are automatically saved. Click "Save & Lock" when done.' 
