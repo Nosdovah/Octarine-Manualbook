@@ -63,9 +63,7 @@ const Sidebar = () => {
           title="Show Sidebar Menu"
           aria-label="Show Sidebar Navigation"
         >
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
+          <span>▶</span>
           <span>Show Menu</span>
         </button>
       )}
@@ -95,9 +93,7 @@ const Sidebar = () => {
                 title="Hide Sidebar"
                 aria-label="Hide Sidebar"
               >
-                <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" strokeWidth="2" fill="none">
-                  <polyline points="15 18 9 12 15 6"></polyline>
-                </svg>
+                <span>◀</span>
                 <span>Hide</span>
               </button>
             </div>
@@ -116,7 +112,7 @@ const Sidebar = () => {
                         onClick={() => handleRenameCat(category.id, category.title)}
                         title="Rename Category"
                       >
-                        Edit
+                        ✏️
                       </button>
                       <button 
                         type="button" 
@@ -124,7 +120,7 @@ const Sidebar = () => {
                         onClick={() => setNewPageModalCatId(category.id)}
                         title="Add Page to this Category"
                       >
-                        + Page
+                        ➕
                       </button>
                       <button 
                         type="button" 
@@ -132,7 +128,7 @@ const Sidebar = () => {
                         onClick={() => handleDeleteCat(category.id, category.title)}
                         title="Delete Category"
                       >
-                        Delete
+                        🗑️
                       </button>
                     </div>
                   )}
@@ -155,7 +151,7 @@ const Sidebar = () => {
                             onClick={(e) => { e.preventDefault(); handleRenamePg(item.id, item.title); }}
                             title="Rename page title"
                           >
-                            Edit
+                            ✏️
                           </button>
                           <button 
                             type="button" 
@@ -163,7 +159,7 @@ const Sidebar = () => {
                             onClick={(e) => { e.preventDefault(); handleDeletePg(category.id, item.id, item.slug, item.title); }}
                             title="Delete page"
                           >
-                            Del
+                            ×
                           </button>
                         </div>
                       )}
